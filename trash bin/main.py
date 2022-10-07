@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
 from pygame.locals import *
-from robot import *
+from Robot import *
 import random
 
 # Screen

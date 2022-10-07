@@ -2,7 +2,7 @@ import numpy as np
 import pygame
 import math
 
-class robot:
+class Robot:
 
     def __init__(self, init_x, init_y, init_phi, robot_l, robot_b, data):
         self.x = init_x
