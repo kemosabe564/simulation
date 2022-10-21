@@ -11,6 +11,7 @@ import random
 # sys.path.append('../')
 from src.Robot import *
 from src.Obstacles import *
+from src.Kal import *
 
 
 
@@ -26,12 +27,12 @@ if(__name__ == '__main__'):
     screen = pygame.display.set_mode([screen_width, screen_height], DOUBLEBUF)
     robot_x = 100; robot_y = 100; robot_phi = 0; robot_l = 15; robot_b = 6  # Initial position
     sensor_r = 50   # Sensor skirt radius
-    goalX = np.array([300, 300])    # goal position
+    goalX = np.array([600, 400])    # goal position
     
-    obstacle = Obstacles(screen_width, screen_height, 6, 10, 50)
+    obstacle = Obstacles(screen_width, screen_height, 8, 20, 50)
     setup = {"goalX":goalX, "vmax":0.5, "gtg_scaling":0.0001, "K_p":0.01, "ao_scaling":0.00005}
     robot = Robot(robot_x, robot_y, robot_phi, sensor_r, robot_l, robot_b, setup)
-        
+    K_filter = Kalman()    
     
     pygame.init()
     pygame.display.set_caption('Unicycle robot')
@@ -63,7 +64,7 @@ if(__name__ == '__main__'):
         screen.fill((50, 55, 60))   # background
         pygame.draw.circle(screen, (0,255,0), goalX, 8, 0)  # Draw goal
 
-        # obstacle.draw_circular_obsts(screen)
+        obstacle.draw_circular_obsts(screen)
         robot.show(screen)
         
         # closest_obstacles = []; closest_dist = max(screen_height, screen_width)
@@ -81,9 +82,9 @@ if(__name__ == '__main__'):
 
         if(robot.ternimate() == 1):                          
             [v, omega] = robot.go_to_goal()
-            robot.update_movement(v, omega)
+            robot.update_movement(v, omega, obstacle)
         else:      
-            robot.update_movement(0, 0)
+            robot.update_movement(0, 0, obstacle)
             
         
         clock.tick(200)     # To limit fps, controls speed of the animation
