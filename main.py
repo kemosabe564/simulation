@@ -3,24 +3,18 @@ import numpy as np
 import pygame
 from pygame.locals import *
 
-import random
-
-
-
-# import sys
-# sys.path.append('../')
 from src.Robot import *
 from src.Obstacles import *
-from src.Kal import *
-
-
-
+from src.Kalman import *
 
 if(__name__ == '__main__'):
     
+    measurement_Kalman_file = open('data\\measurement_Kalman.txt', 'w')
     measurement_true_file = open('data\\measurement_true.txt', 'w')
     measurement_bias_file = open('data\\measurement_bias.txt', 'w')
     estimation_file = open('data\\estimation.txt', 'w')
+    desired_trajectory_file = open('data\\desired_trajectory.txt', 'w')
+    biased_trajectory_file = open('data\\biased_trajectory.txt', 'w')
     
     # init
     screen_width = 640; screen_height = 480
@@ -43,14 +37,19 @@ if(__name__ == '__main__'):
     v = 0
     omega = 0
     
-    
     while(1):
+        measurement_Kalman_file.write((str(format(robot.measurement_Kalman[0], '.6f')) + " " + str(format(robot.measurement_Kalman[1], '.6f')) + " " + str(format(robot.measurement_Kalman[2], '.6f'))))
+        measurement_Kalman_file.write("\n")
         measurement_true_file.write(str(format(robot.measurement_true[0], '.6f')) + " " + str(format(robot.measurement_true[1], '.6f')) + " " + str(format(robot.measurement_true[2], '.6f')))
         measurement_true_file.write("\n")
         measurement_bias_file.write((str(format(robot.measurement_bias[0], '.6f')) + " " + str(format(robot.measurement_bias[1], '.6f')) + " " + str(format(robot.measurement_bias[2], '.6f'))))        
         measurement_bias_file.write("\n")
         estimation_file.write((str(format(robot.estimation[0], '.6f')) + " " + str(format(robot.estimation[1], '.6f')) + " " + str(format(robot.estimation[2], '.6f'))))
         estimation_file.write("\n")
+        desired_trajectory_file.write((str(format(robot.desired_trajectory[0], '.6f')) + " " + str(format(robot.desired_trajectory[1], '.6f')) + " " + str(format(robot.desired_trajectory[2], '.6f'))))
+        desired_trajectory_file.write("\n")
+        biased_trajectory_file.write((str(format(robot.biased_trajectory[0], '.6f')) + " " + str(format(robot.biased_trajectory[1], '.6f')) + " " + str(format(robot.biased_trajectory[2], '.6f'))))
+        biased_trajectory_file.write("\n")
         
         
         # print(robot.measurement_true)
@@ -81,10 +80,10 @@ if(__name__ == '__main__'):
         #     [v, omega] = robot.go_to_goal()
 
         if(robot.ternimate() == 1):                          
-            [v, omega] = robot.go_to_goal()
-            robot.update_movement(v, omega, obstacle)
+            [v, omega, v0, omaga0, v_biased, omega_biased] = robot.go_to_goal()
+            robot.update_movement(v, omega, v0, omaga0, v_biased, omega_biased, obstacle, K_filter)
         else:      
-            robot.update_movement(0, 0, obstacle)
+            robot.update_movement(0, 0, 0, 0, 0, 0, obstacle, K_filter)
             
         
         clock.tick(200)     # To limit fps, controls speed of the animation
