@@ -71,13 +71,13 @@ class Kalman:
         K_k = P_k @ self.H_k.T @ np.linalg.pinv(S_k)
             
         # Calculate an updated state estimate for time k
-        state_estimate_k = state_estimate_k + (K_k @ measurement_residual_y_k)
+        optimal_state_estimate_k = state_estimate_k + (K_k @ measurement_residual_y_k)
         
         # Update the state covariance estimate for time k
         P_k = P_k - (K_k @ self.H_k @ P_k)
         
         # Print the best (near-optimal) estimate of the current state of the robot
-        # print(f'State Estimate After EKF={state_estimate_k}')
+        # print(f'State Estimate After EKF={optimal_state_estimate_k}')
     
         # Return the updated state and covariance estimates
-        return state_estimate_k, P_k
+        return optimal_state_estimate_k, P_k

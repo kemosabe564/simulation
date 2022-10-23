@@ -36,11 +36,11 @@ class Robot:
         return X
     
     def states_perturb(self, v0 = 0.0, omega0 = 0.0):
-        K1 = 0.5; K2 = 0.5
+        K1 = 1; K2 = 1
         w1 = 0.5; w2 = 0.5
 
-        v = v0 + K1*random.uniform(-w1*v0, w1*v0) + 0.001
-        omega = omega0 + K2*random.uniform(-w2*omega0, w2*omega0) + + 0.001
+        v = v0 + K1*random.uniform(-w1*v0, w1*v0) + 0.000
+        omega = omega0 + K2*random.uniform(-w2*omega0, w2*omega0) + 0.000
         
         return [v, omega]
         
@@ -49,7 +49,7 @@ class Robot:
         x = []; y = []
         for i in range(obstacles.num_circ_obsts):
             dis = math.sqrt((obstacles.circ_x[i] - self.x)**2 + (obstacles.circ_y[i] - self.y)**2)
-            if(dis < 75):
+            if(dis < 80):
                 x.append(obstacles.circ_x[i])
                 y.append(obstacles.circ_y[i])
         print(x)
@@ -58,11 +58,11 @@ class Robot:
             temp = 1#random.randint(0, 1)
             print(temp)
             if(temp):
-                self.measurement_bias[0] = x[idx]
-                self.measurement_bias[1] = y[idx]
+                self.measurement_bias[0] = x[idx] + random.uniform(-1, 1)
+                self.measurement_bias[1] = y[idx] + random.uniform(-1, 1)
 
     def measurement_pertub(self, obstacles):
-        K1 = 0.1; K2 = 0.01
+        K1 = 0.2; K2 = 0.2
         w1 = 0.1; w2 = 0.1; w3 = 0.1
         self.measurement_bias[0] = self.measurement_true[0] + K1*random.uniform(-w1*self.measurement_true[0], w1*self.measurement_true[0])
         self.measurement_bias[1] = self.measurement_true[1] + K1*random.uniform(-w2*self.measurement_true[1], w2*self.measurement_true[1])
@@ -84,15 +84,15 @@ class Robot:
         else:
             [v1, omega1] = [v, omega]
             
+        # since the eastimation doesn't know states pertubed, it will update itself based on unbiased control input ans current states
+        self.estimation = self.states_transform(v, omega, [self.x, self.y, self.phi])
+            
         # based on the pertubed control input, to update the true states 
         [self.x, self.y, self.phi] = self.states_transform(v1, omega1, [self.x, self.y, self.phi])
         
         # record the true states as measurement_true
         self.measurement_true = np.array([self.x, self.y, self.phi], float) 
 
-        # since the eastimation doesn't know states pertubed, it will update itself based on unbiased control input ans current states
-        self.estimation = self.states_transform(v, omega, [self.x, self.y, self.phi])
-        
         # if not stop, measurements are pertubed, they could merge together
         if(self.flag):
             self.measurement_pertub(obstacles)
