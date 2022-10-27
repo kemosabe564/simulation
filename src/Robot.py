@@ -119,7 +119,7 @@ class Robot:
         
         
     def go_to_goal(self):
-        e = self.data["goalX"] - [self.measurement_Kalman[0], self.measurement_Kalman[1]]     # error in position
+        e = self.data["goalX"] - [self.measurement_bias[0], self.measurement_bias[1]]     # error in position
         e0 = self.data["goalX"] - [self.desired_trajectory[0], self.desired_trajectory[1]] 
         e_biased = self.data["goalX"] - [self.measurement_bias[0], self.measurement_bias[1]] 
         # K = self.data["vmax"] * (1 - np.exp(- self.data["gtg_scaling"] * np.linalg.norm(e)**2)) / np.linalg.norm(e)     # Scaling for velocity
@@ -132,7 +132,7 @@ class Robot:
         phi_d0 = math.atan2(e0[1], e0[0]) 
         phi_biased = math.atan2(e_biased[1], e_biased[0])
          
-        omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.measurement_Kalman[2]), math.cos(phi_d - self.measurement_Kalman[2]))     # Only P part of a PID controller to give omega as per desired heading
+        omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.measurement_bias[2]), math.cos(phi_d - self.measurement_bias[2]))     # Only P part of a PID controller to give omega as per desired heading
         omega0 = self.data["K_p"]*math.atan2(math.sin(phi_d0 - self.desired_trajectory[2]), math.cos(phi_d0 - self.desired_trajectory[2]))     # Only P part of a PID controller to give omega as per desired heading
         omega_biased = self.data["K_p"]*math.atan2(math.sin(phi_biased - self.measurement_bias[2]), math.cos(phi_biased - self.measurement_bias[2]))
         

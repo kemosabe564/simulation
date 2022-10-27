@@ -26,6 +26,8 @@ if(__name__ == '__main__'):
     obstacle = Obstacles(screen_width, screen_height, 8, 20, 50)
     setup = {"goalX":goalX, "vmax":0.5, "gtg_scaling":0.0001, "K_p":0.01, "ao_scaling":0.00005}
     robot = Robot(robot_x, robot_y, robot_phi, sensor_r, robot_l, robot_b, setup)
+    robot1 = Robot(100, 400, robot_phi, sensor_r, robot_l, robot_b, setup)
+    
     K_filter = Kalman()    
     
     pygame.init()
@@ -65,7 +67,7 @@ if(__name__ == '__main__'):
 
         obstacle.draw_circular_obsts(screen)
         robot.show(screen)
-        
+        robot1.show(screen)
         # closest_obstacles = []; closest_dist = max(screen_height, screen_width)
         
         # for i in range(obstacle.num_circ_obsts):
@@ -84,7 +86,12 @@ if(__name__ == '__main__'):
             robot.update_movement(v, omega, v0, omaga0, v_biased, omega_biased, obstacle, K_filter)
         else:      
             robot.update_movement(0, 0, 0, 0, 0, 0, obstacle, K_filter)
-            
+        
+        if(robot1.ternimate() == 1):                          
+            [v, omega, v0, omaga0, v_biased, omega_biased] = robot1.go_to_goal()
+            robot1.update_movement(v, omega, v0, omaga0, v_biased, omega_biased, obstacle, K_filter)
+        else:      
+            robot1.update_movement(0, 0, 0, 0, 0, 0, obstacle, K_filter)
         
         clock.tick(200)     # To limit fps, controls speed of the animation
         fps = (frames*1000)/(pygame.time.get_ticks() - ticks)   # calculate current fps

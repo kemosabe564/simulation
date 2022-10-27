@@ -36,7 +36,7 @@ if(__name__ == '__main__'):
     # plt.plot(biased_trajectory['x'], biased_trajectory['y'], '*', markersize = MARKERSIZE, label = "biased trajectory")
     plt.plot(measurement_true['x'], -measurement_true['y'], '*', markersize = MARKERSIZE, label = "true measurement")
     plt.plot(measurement_bias['x'], -measurement_bias['y'], '*', markersize = MARKERSIZE, label = "biased measurement")
-    plt.plot(measurement_Kalman['x'], -measurement_Kalman['y'], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
+    # plt.plot(measurement_Kalman['x'], -measurement_Kalman['y'], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
     plt.xlabel('x'); plt.ylabel('y'); plt.title("trajectories with Kalman")
     plt.legend()
     plt.show()
