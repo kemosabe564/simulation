@@ -17,9 +17,9 @@ class Kalman:
         # state_noise
         self.process_noise_v_k_minus_1 = np.array([0.00, 0.00, 0.000])
 
-        self.Q_k = np.array([[1,    0,   0],
-                             [   0, 1,   0],
-                             [   0,    0, 11]])
+        self.Q_k = np.array([[0.0005,     0,     0],
+                             [    0, 0.0005,     0],
+                             [    0,     0, 0.0005]])
              
         self.H_k = np.array([[1.0,   0,   0],
                              [  0, 1.0,   0],
@@ -81,3 +81,6 @@ class Kalman:
     
         # Return the updated state and covariance estimates
         return optimal_state_estimate_k, P_k
+    
+    def multirate_KF(self, z_k, state_estimate_k, u_k_1, dk = 1):
+        print(10)
