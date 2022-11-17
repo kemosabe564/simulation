@@ -86,7 +86,7 @@ class Robot:
         self.bottom_r = [self.bottom[0] + self.b * temp_sin, self.bottom[1] - self.b * temp_cos]
     
     
-    def update_measurement(self, v, omega, k_filter, robots, camera):
+    def update_measurement(self, v, omega, k_filter, camera):
 
         # record the true states as measurement_true
         self.measurement_true = np.array([self.x, self.y, self.phi], float)
