@@ -9,21 +9,29 @@ screen_height = 640
 
 class Robot:
     
-    def __init__(self, idx, init_x, init_y, init_phi, endpoint, sensor_r, robot_l, robot_b, data = []):
+    def __init__(self, idx, init_x, init_y, init_phi, endpoint, robot_l, robot_b, data = []):
         self.timer = 0
         self.idx = idx
         self.x = init_x * 1.0
         self.y = init_y * 1.0
         self.phi = init_phi * 1.0
         self.goalX = endpoint
-        
-        self.sensor_range = sensor_r * 1.0
-        self.l = robot_l # Robot length is 2*l
-        self.b = robot_b # Robot breadth is 2*b
+        # P controllor parameters
         self.data = data
-        self.flag = 1
+        
+        # whether the robot reaches its endpoint
+        self.moving = True
+        # whether the robot updates its init points
+        self.start = False
+        
+        # buffer
+        self.position_buffer = []
+        self.camera_buffer = []
         
         
+        
+        
+        # for logging data
         self.desired_trajectory = np.array([self.x, self.y, self.phi], float)
         self.biased_trajectory = np.array([self.x, self.y, self.phi], float)
         
@@ -33,6 +41,10 @@ class Robot:
         
         self.measurement_Kalman = np.array([self.x, self.y, self.phi], float)
         
+        
+        # for drawing
+        self.l = robot_l # Robot length is 2*l
+        self.b = robot_b # Robot breadth is 2*b
         temp_sin = math.sin(self.phi)
         temp_cos = math.cos(self.phi)
         self.tip = [self.x + self.l * temp_cos, self.y + self.l * temp_sin]
@@ -67,7 +79,7 @@ class Robot:
         self.biased_trajectory = self.states_transform(v_biased, omega_biased, [self.x, self.y, self.phi])
               
         # if not stop, states are pertubed
-        if(self.flag):
+        if(self.moving):
             [v1, omega1] = self.states_perturb(v, omega)
         else:
             [v1, omega1] = [v, omega]
@@ -96,8 +108,6 @@ class Robot:
         # it will use the last estimation to update the new one
         self.estimation = self.states_transform(v, omega, self.estimation)
                
-        
-        
         no_sensor = False
         
         if(no_sensor):      
@@ -108,12 +118,21 @@ class Robot:
             
             # if not stop, measurements are pertubed, they could merge together, so the camera will give a "fake" data
             # update the measurement
-            if(self.flag):
+            if(self.moving):
                 
                 # self.measurement_pertub(robots)
-                self.measurement_bias = camera.measurement_list[self.idx]
-
-              
+                # self.measurement_bias = camera.measurement_list[self.idx]
+                MAX = screen_width + screen_height; i = 0; idx = 0
+                for item in camera.measurement_list:
+                    dist = math.sqrt((self.x - item[0])**2 + (self.y - item[1])**2)
+                    if(dist < MAX):
+                        MAX = dist
+                        idx = i
+                    i += 1
+                # print(self.idx, ":")
+                # print(camera.measurement_list[idx])
+                self.measurement_bias = camera.measurement_list[idx]
+                
             K = 1
             if(K):
                 # if we decide to use the Kalman filter to correct the fake measurement 
@@ -131,8 +150,7 @@ class Robot:
                 # then we use the pertubed measurement ans its true 
                 self.estimation = self.measurement_bias
                 
-                               
-        
+                                    
     def go_to_goal(self):
         # self.goal = endpoints
         # e = self.data["goalX"] - [self.measurement_Kalman[0], self.measurement_bias[1]]     # error in position
@@ -158,23 +176,15 @@ class Robot:
         
         return [v, omega, v0, omega0, v_biased, omega_biased]
 
-    # def avoid_obst(self, obstX):
-    #     e = obstX - self.X     # error in position
-    #     K = self.data["vmax"] * (1 - np.exp(- self.data["ao_scaling"] * np.linalg.norm(e)**2)) / np.linalg.norm(e)      # Scaling for velocity
-    #     v = np.linalg.norm(K * e)   # Velocity decreases as bot gets closer to obstacle
-    #     phi_d = -math.atan2(e[1], e[0]) # Desired heading
-    #     omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.phi), math.cos(phi_d - self.phi))     # Only P part of a PID controller to give omega as per desired heading
-    #     return [v, omega]
-
 
     def ternimate(self):
         K = 30.0
         distance = math.sqrt((self.goalX[0] - self.x)**2 + (self.goalX[1] - self.y)**2)
         if(distance < K):
-            self.flag = 0
+            self.moving = 0
             return 0
         else:
-            self.flag = 1
+            self.moving = 1
             return 1
 
 

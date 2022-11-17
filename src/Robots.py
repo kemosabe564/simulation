@@ -20,7 +20,7 @@ class Robots:
         self.distance_map.fill(0)
         
         for i in range(n):
-            temp = Robot(i, robots_x[i], robots_y[i], robots_phi[i], goalX[i], 50, 15, 6, setup)
+            temp = Robot(i, robots_x[i], robots_y[i], robots_phi[i], goalX[i], 15, 6, setup)
             self.robots_list.append(temp)
             
     def robots_display(self, screen):
@@ -39,7 +39,8 @@ class Robots:
                     temp.append(j)
             idx = random.randint(0, len(temp)-1)
             self.distance_map.append(temp[idx])
- 
+        self.distance_map = list(set(self.distance_map))
+        # print(self.distance_map)
                   
         
     def robots_simulation_loop(self, goalX, K_filter, camera):

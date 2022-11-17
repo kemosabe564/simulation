@@ -22,15 +22,11 @@ if(__name__ == '__main__'):
     # init
     screen_width = 1080; screen_height = 640
     screen = pygame.display.set_mode([screen_width, screen_height], DOUBLEBUF)
-    robot_x = 100; robot_y = 100; robot_phi = 0; robot_l = 15; robot_b = 6  # Initial  position
-    sensor_r = 50   # Sensor skirt radius
+    
+    robot_l = 15; robot_b = 6 
     goalX = np.array([[600, 400], [600, 100], [900, 300]])#, [400, 500], [600, 400], [1000, 500], [1000, 100], [600, 600], [100, 100], [100, 400]])    # goal position
-
-    # obstacle = Obstacles(screen_width, screen_height, 0, 20, 50)
     
     setup = {"vmax":0.5, "gtg_scaling":0.0001, "K_p":0.01, "ao_scaling":0.00005}
-    # robot = Robot(robot_x, robot_y, robot_phi, sensor_r, robot_l, robot_b, setup)
-    # robot1 = Robot(100, 400, robot_phi, sensor_r, robot_l, robot_b, setup)
     
     # init robots
     robots_x = np.array([100, 100, 100])#, 200, 200, 300, 400, 500, 700, 900])
@@ -51,9 +47,7 @@ if(__name__ == '__main__'):
     ticks = pygame.time.get_ticks()
     frames = 0
     
-    v = 0
-    omega = 0
-    
+    # while loop
     while(1):
         
         for robot in robots.robots_list:
@@ -73,7 +67,7 @@ if(__name__ == '__main__'):
         # print(robot.measurement_true)
         event = pygame.event.poll()
         
-        if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+        if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE) or frames >= 10000:
             for item in file_list:
                 item.close()
             break
@@ -98,4 +92,3 @@ if(__name__ == '__main__'):
         # Update PyGame display
         pygame.display.flip()
         frames += 1
-        
