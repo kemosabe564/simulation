@@ -25,11 +25,17 @@ class Robot:
         self.start = False
         
         # buffer
+        
         self.position_buffer = []
-        self.camera_buffer = []
+        self.camera_buffer = [[] for i in range(3)]
+        self.buffer_size = 21
         
-        
-        
+        # speed 0.1-0.15
+        # angle -0.0001 0.0001
+        self.x0 = 0.0
+        self.y0 = 0.0
+        self.phi0 = 0.0
+        self.omega0 = 0.0
         
         # for logging data
         self.desired_trajectory = np.array([self.x, self.y, self.phi], float)
@@ -68,15 +74,15 @@ class Robot:
         return [v, omega]
 
         
-    def update_movement(self, v, omega, v0, omega0, v_biased, omega_biased):
+    def update_movement(self, v, omega):
         
         self.timer += 1
         
-        # for the most desired position, without any pertub, either on states or measures
-        self.desired_trajectory = self.states_transform(v0, omega0, self.desired_trajectory)
+        # # for the most desired position, without any pertub, either on states or measures
+        # self.desired_trajectory = self.states_transform(v0, omega0, self.desired_trajectory)
         
-        # for the biased trajectory, it uses measurement with bias
-        self.biased_trajectory = self.states_transform(v_biased, omega_biased, [self.x, self.y, self.phi])
+        # # for the biased trajectory, it uses measurement with bias
+        # self.biased_trajectory = self.states_transform(v_biased, omega_biased, [self.x, self.y, self.phi])
               
         # if not stop, states are pertubed
         if(self.moving):
@@ -87,6 +93,7 @@ class Robot:
         # based on the pertubed control input, to update the true states 
         [self.x, self.y, self.phi] = self.states_transform(v1, omega1, [self.x, self.y, self.phi])
         
+        [self.x0, self.y0, self.phi0] = self.states_transform(v1, omega1, [self.x0, self.y0, self.phi0])
         
                 
         # for drawing
@@ -97,6 +104,64 @@ class Robot:
         self.bottom_l = [self.bottom[0] - self.b * temp_sin, self.bottom[1] + self.b * temp_cos]
         self.bottom_r = [self.bottom[0] + self.b * temp_sin, self.bottom[1] - self.b * temp_cos]
     
+    def update_measurement_statr(self, v, omega, camera):
+        self.measurement_true = np.array([self.x, self.y, self.phi], float)
+        self.estimation = [self.x0, self.y0, self.phi0]
+        if(self.timer % 10 == 0):
+            self.position_buffer.append([self.x0, self.y0])
+
+            i = 0
+            # print(camera.measurement_list)
+            if(len(camera.measurement_list) == 3):
+                for item in camera.measurement_list:
+            
+                    self.camera_buffer[i].append([item[0], item[1]])
+                    
+                    i += 1
+            # print(self.camera_buffer)
+ 
+        if(len(self.position_buffer) >= self.buffer_size):
+            self.determine_camera()
+    
+    def determine_camera(self):
+        # print(self.position_buffer)
+   
+        # print(self.camera_buffer[0])
+        
+        for i in range(3):
+            base_x = self.camera_buffer[i][0][0]
+            base_y = self.camera_buffer[i][0][1]
+            for j in range(self.buffer_size-1):
+                self.camera_buffer[i][j][0] = self.camera_buffer[i][j][0] - base_x
+                self.camera_buffer[i][j][1] = self.camera_buffer[i][j][1] - base_y
+            # for item in self.camera_buffer[i]:
+            #     item[0] = item[0] - base_x
+            #     item[1] = item[1] - base_y
+        # print(self.camera_buffer[1])        
+            
+        abs_value = []
+        min_dist = 10 * screen_height
+        min_idx = 0
+        for i in range(3):
+            temp = 0
+            for j in range(len(self.position_buffer)):
+                dist = math.sqrt((self.position_buffer[j][0] - self.camera_buffer[i][j][0])**2 + (self.position_buffer[j][1] - self.camera_buffer[i][j][1])**2)
+                temp += dist
+            
+            if(temp <= min_dist):
+                min_dist = temp
+                min_idx = i
+            abs_value.append(temp)
+        
+        print(abs_value)
+        print(min_idx)
+        
+            
+        # 做些判断，找到最后应该是哪一条camera的信息
+        self.estimation[0] = self.camera_buffer[min_idx][self.buffer_size-1][0]
+        self.estimation[1] = self.camera_buffer[min_idx][self.buffer_size-1][1]
+        # print(self.camera_buffer[0])
+        self.start = True
     
     def update_measurement(self, v, omega, k_filter, camera):
 
@@ -106,8 +171,13 @@ class Robot:
         # since the eastimation doesn't know states pertubed, it will update itself based on unbiased control input ans current states
         # self.estimation = self.states_transform(v, omega, [self.x, self.y, self.phi])
         # it will use the last estimation to update the new one
+        
+        
         self.estimation = self.states_transform(v, omega, self.estimation)
-               
+
+            
+            
+                   
         no_sensor = False
         
         if(no_sensor):      
@@ -124,7 +194,7 @@ class Robot:
                 # self.measurement_bias = camera.measurement_list[self.idx]
                 MAX = screen_width + screen_height; i = 0; idx = 0
                 for item in camera.measurement_list:
-                    dist = math.sqrt((self.x - item[0])**2 + (self.y - item[1])**2)
+                    dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
                     if(dist < MAX):
                         MAX = dist
                         idx = i
@@ -150,6 +220,12 @@ class Robot:
                 # then we use the pertubed measurement ans its true 
                 self.estimation = self.measurement_bias
                 
+     
+    def random_moving(self, omega):
+        v = random.uniform(0.05, 0.20)
+        if(self.timer % 5 == 0):
+            omega += random.uniform(-0.001, 0.001)
+        return [v, omega] 
                                     
     def go_to_goal(self):
         # self.goal = endpoints
@@ -191,7 +267,40 @@ class Robot:
     def show(self, screen):
         pygame.draw.polygon(screen, (255,0,0), [self.tip, self.bottom_l, self.bottom_r], 0)
         pygame.draw.circle(screen, (255,0,0), (self.x, self.y), 15, 1)
+
+    # 1. camera update the measurements and give biased measurement
+    # 2. rob 
+    def robot_loop(self, goalX, K_filter, camera):
+        
+        if(self.start):
+            if(self.ternimate() == 1):         
+                    # 2. robot decide where to go                 
+                    [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
+                    # 3. robot execute the decision
+                    self.update_movement(v, omega)
+                    # 4. robot receive the information where it is
+                    self.update_measurement(v, omega, K_filter, camera)
+                    # print(v, omega)
+                    
+            else:
+                # if the robot reaches its end, make it stop and change another goal point      
+                self.update_movement(0, 0)
+                self.update_measurement(0, 0, K_filter, camera)
+                # update new GoalX
+                goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)
+                goalX[1] = random.uniform(0.1*screen_height, 0.9*screen_height)
+                while(goalX[0] >= screen_width or goalX[1] >= screen_height or goalX[0] <= 0 or goalX[1] <= 0):
+                    goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)
+                    goalX[1] = random.uniform(0.1*screen_height, 0.9*screen_height)
+        else:
+            # [v, omega] = self.random_moving(self.omega0)
+            [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
+            self.update_movement(v, omega)
+            self.update_measurement_statr(v, omega, camera)
             
+            
+            # if(self.timer == 500):
+            #     self.start = True
             
 
                 

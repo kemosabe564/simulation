@@ -22,22 +22,19 @@ class Camera:
         
     def update_measurements(self, idx, true_position):
         self.position_list[idx] = true_position
-        
-        
-
-        
+                
         
     def measurement_merge_perturb(self, robots):
         self.measurement_list = []
         K1 = 0.05; K2 = 0 
         w1 = 0.1; w2 = 0.1; w3 = 0
-        flag = True
+        perturb = True
         # considering the worst case that if there is somethin
         i = 0
         for item in robots.distance_map:
             
             self.measurement_list.append(self.position_list[item])
-            if(flag):
+            if(perturb):
                 self.measurement_list[i][0] = self.measurement_list[i][0] + K1*random.uniform(-w1*self.position_list[i][0], w1*self.position_list[i][0])
                 self.measurement_list[i][1] = self.measurement_list[i][1] + K1*random.uniform(-w2*self.position_list[i][1], w2*self.position_list[i][1])
                 self.measurement_list[i][2] = self.measurement_list[i][2] + K2*random.uniform(-w3*self.position_list[i][2], w3*self.position_list[i][2])

@@ -9,8 +9,7 @@ from src.Camera import *
 
 if(__name__ == '__main__'):
     
-    # open the file
-    
+    # open the file    
     measurement_Kalman_file = open('data\\measurement_Kalman.txt', 'w')
     measurement_true_file = open('data\\measurement_true.txt', 'w')
     measurement_bias_file = open('data\\measurement_bias.txt', 'w')
