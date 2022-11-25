@@ -39,7 +39,7 @@ if(__name__ == '__main__'):
     
     if(flag):
         # for i in range(0, 1):
-        i = 0
+        i = 2
         # plt.plot(desired_trajectory['x'], -desired_trajectory['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
         # plt.plot(biased_trajectory['x'], -biased_trajectory['y'], '*', markersize = MARKERSIZE, label = "biased trajectory")
         plt.plot(estimation['x'][i::3]+1, -estimation['y'][i::3], '*', markersize = MARKERSIZE, label = "estimated position")

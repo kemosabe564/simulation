@@ -107,6 +107,8 @@ class Robot:
     def update_measurement_statr(self, v, omega, camera):
         self.measurement_true = np.array([self.x, self.y, self.phi], float)
         self.estimation = [self.x0, self.y0, self.phi0]
+        
+        
         if(self.timer % 10 == 0):
             self.position_buffer.append([self.x0, self.y0])
 
@@ -128,6 +130,7 @@ class Robot:
    
         # print(self.camera_buffer[0])
         
+        # normalize
         for i in range(3):
             base_x = self.camera_buffer[i][0][0]
             base_y = self.camera_buffer[i][0][1]
@@ -222,7 +225,7 @@ class Robot:
                 
      
     def random_moving(self, omega):
-        v = random.uniform(0.05, 0.20)
+        v = random.uniform(0.10, 0.20)
         if(self.timer % 5 == 0):
             omega += random.uniform(-0.001, 0.001)
         return [v, omega] 
@@ -293,8 +296,8 @@ class Robot:
                     goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)
                     goalX[1] = random.uniform(0.1*screen_height, 0.9*screen_height)
         else:
-            # [v, omega] = self.random_moving(self.omega0)
-            [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
+            [v, omega] = self.random_moving(self.omega0)
+            # [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
             self.update_movement(v, omega)
             self.update_measurement_statr(v, omega, camera)
             
