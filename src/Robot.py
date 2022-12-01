@@ -5,11 +5,11 @@ import random
 
 screen_width = 1080
 screen_height = 640
-
+N = 10
 
 class Robot:
     
-    def __init__(self, idx, init_x, init_y, init_phi, endpoint, robot_l, robot_b, data = []):
+    def __init__(self, idx, init_x, init_y, init_phi, omega0, endpoint, robot_l, robot_b, data = []):
         self.timer = 0
         self.idx = idx
         self.x = init_x * 1.0
@@ -22,25 +22,27 @@ class Robot:
         # whether the robot reaches its endpoint
         self.moving = True
         # whether the robot updates its init points
-        self.start = False
+        self.start = True
         
         # buffer
         
         self.position_buffer = []
         self.camera_buffer = [[] for i in range(3)]
-        self.buffer_size = 21
+        self.buffer_size = 41
         
         # speed 0.1-0.15
         # angle -0.0001 0.0001
-        self.x0 = 0.0
-        self.y0 = 0.0
-        self.phi0 = 0.0
-        self.omega0 = 0.0
+        self.x0 = init_x
+        self.y0 = init_y
+        self.phi0 = init_phi
+        self.omega0 = omega0
         
         # for logging data
         self.desired_trajectory = np.array([self.x, self.y, self.phi], float)
         self.biased_trajectory = np.array([self.x, self.y, self.phi], float)
         
+        
+        self.odometry = np.array([self.x, self.y, self.phi], float)
         self.estimation = np.array([self.x, self.y, self.phi], float)
         self.measurement_true = np.array([self.x, self.y, self.phi], float)
         self.measurement_bias = np.array([self.x, self.y, self.phi], float)
@@ -67,9 +69,9 @@ class Robot:
 
     
     def states_perturb(self, v0 = 0.0, omega0 = 0.0):
-        K1 = 1; K2 = 1
+        K1 = 1; K2 = 0.5
         w1 = 0.5; w2 = 0.5
-        v = v0 + K1*random.uniform(-w1*v0, w1*v0) + 0.010
+        v = v0 + K1*random.uniform(-w1*v0, w1*v0) + 0.000
         omega = omega0 + K2*random.uniform(-w2*omega0, w2*omega0) + 0.000
         return [v, omega]
 
@@ -95,6 +97,8 @@ class Robot:
         
         [self.x0, self.y0, self.phi0] = self.states_transform(v1, omega1, [self.x0, self.y0, self.phi0])
         
+        self.odometry = self.states_transform(v, omega, self.odometry)
+        
                 
         # for drawing
         temp_sin = math.sin(self.phi)
@@ -110,11 +114,12 @@ class Robot:
         
         
         if(self.timer % 10 == 0):
-            self.position_buffer.append([self.x0, self.y0])
+            
 
             i = 0
             # print(camera.measurement_list)
             if(len(camera.measurement_list) == 3):
+                self.position_buffer.append([self.x0, self.y0])
                 for item in camera.measurement_list:
             
                     self.camera_buffer[i].append([item[0], item[1]])
@@ -177,17 +182,28 @@ class Robot:
         
         
         self.estimation = self.states_transform(v, omega, self.estimation)
-
+ 
+        # if(len(camera.measurement_list) == N):
+        #     k_filter.Q_k = np.array([[0.05,     0,     0],
+        #                                 [    0, 0.05,     0],
+        #                                 [    0,     0, 0.05]])
+        #     K = 1
+        #     no_sensor = False
+        # else:
             
-            
+        #     k_filter.Q_k = np.array([[0.000,     0,     0],
+        #                                 [    0, 0.000,     0],
+        #                                 [    0,     0, 0.000]])
+        #     K = 0    
                    
+        #     no_sensor = True
         no_sensor = False
         
         if(no_sensor):      
             return
         
         # if the robot decide to receive an update from the camera
-        if(self.timer % 10 == 0):
+        if(self.timer % 5 == 0):
             
             # if not stop, measurements are pertubed, they could merge together, so the camera will give a "fake" data
             # update the measurement
@@ -195,20 +211,27 @@ class Robot:
                 
                 # self.measurement_pertub(robots)
                 # self.measurement_bias = camera.measurement_list[self.idx]
-                MAX = screen_width + screen_height; i = 0; idx = 0
+                MAX_dist = 10 * screen_width + 10 * screen_height; i = 0; idx = 0
                 for item in camera.measurement_list:
                     dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
-                    if(dist < MAX):
-                        MAX = dist
+                    if(dist < MAX_dist):
+                        MAX_dist = dist
                         idx = i
                     i += 1
                 # print(self.idx, ":")
                 # print(camera.measurement_list[idx])
+                if(MAX_dist > 200):
+                    return
                 self.measurement_bias = camera.measurement_list[idx]
-                
+                # self.measurement_bias = camera.measurement_list[self.idx]
+
             K = 1
+                
             if(K):
                 # if we decide to use the Kalman filter to correct the fake measurement 
+                # dist = math.sqrt((self.estimation[0] - self.measurement_bias[0])**2 + (self.estimation[1] - self.measurement_bias[1])**2)
+                # print(len(camera.measurement_list))
+                
                 optimal_state_estimate_k, covariance_estimate_k = k_filter.EKF(self.measurement_bias, self.estimation, [v, omega], 1)
                 # obs_vector_z_k = self.measurement_bias, # Most recent sensor measurement
                 # state_estimate_k_1 = self.estimation, # Our most recent estimate of the state
@@ -227,7 +250,7 @@ class Robot:
     def random_moving(self, omega):
         v = random.uniform(0.10, 0.20)
         if(self.timer % 5 == 0):
-            omega += random.uniform(-0.001, 0.001)
+            omega += random.uniform(-0.000, 0.000)
         return [v, omega] 
                                     
     def go_to_goal(self):
@@ -236,24 +259,24 @@ class Robot:
         e = self.goalX - [self.estimation[0], self.estimation[1]]     # error in position
         # e = self.goalX - [self.measurement_bias[0], self.measurement_bias[1]]     # error in position
 
-        e0 = self.goalX - [self.desired_trajectory[0], self.desired_trajectory[1]] 
-        e_biased = self.goalX - [self.measurement_bias[0], self.measurement_bias[1]] 
+        # e0 = self.goalX - [self.desired_trajectory[0], self.desired_trajectory[1]] 
+        # e_biased = self.goalX - [self.measurement_bias[0], self.measurement_bias[1]] 
         # K = self.data["vmax"] * (1 - np.exp(- self.data["gtg_scaling"] * np.linalg.norm(e)**2)) / np.linalg.norm(e)     # Scaling for velocity
         K = [-0.001, -0.001]
         v = np.linalg.norm(K * e)   # Velocity decreases as bot gets closer to goal
-        v0 = np.linalg.norm(K * e0)
-        v_biased = np.linalg.norm(K * e_biased)
+        # v0 = np.linalg.norm(K * e0)
+        # v_biased = np.linalg.norm(K * e_biased)
         
         phi_d = math.atan2(e[1], e[0])  # Desired heading
-        phi_d0 = math.atan2(e0[1], e0[0]) 
-        phi_biased = math.atan2(e_biased[1], e_biased[0])
+        # phi_d0 = math.atan2(e0[1], e0[0]) 
+        # phi_biased = math.atan2(e_biased[1], e_biased[0])
          
         omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.estimation[2]), math.cos(phi_d - self.estimation[2]))     # Only P part of a PID controller to give omega as per desired heading
         # omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.measurement_bias[2]), math.cos(phi_d - self.measurement_bias[2]))     # Only P part of a PID controller to give omega as per desired heading
-        omega0 = self.data["K_p"]*math.atan2(math.sin(phi_d0 - self.desired_trajectory[2]), math.cos(phi_d0 - self.desired_trajectory[2]))     # Only P part of a PID controller to give omega as per desired heading
-        omega_biased = self.data["K_p"]*math.atan2(math.sin(phi_biased - self.measurement_bias[2]), math.cos(phi_biased - self.measurement_bias[2]))
+        # omega0 = self.data["K_p"]*math.atan2(math.sin(phi_d0 - self.desired_trajectory[2]), math.cos(phi_d0 - self.desired_trajectory[2]))     # Only P part of a PID controller to give omega as per desired heading
+        # omega_biased = self.data["K_p"]*math.atan2(math.sin(phi_biased - self.measurement_bias[2]), math.cos(phi_biased - self.measurement_bias[2]))
         
-        return [v, omega, v0, omega0, v_biased, omega_biased]
+        return [v, omega]#, v0, omega0, v_biased, omega_biased]
 
 
     def ternimate(self):
@@ -270,6 +293,12 @@ class Robot:
     def show(self, screen):
         pygame.draw.polygon(screen, (255,0,0), [self.tip, self.bottom_l, self.bottom_r], 0)
         pygame.draw.circle(screen, (255,0,0), (self.x, self.y), 15, 1)
+        # font_obj = pygame.font.Font('freesansbold.ttf', 20)
+        # text_surface_obj = font_obj.render(str(self.idx), True, (0, 255, 0), (0, 0, 180))
+        # text_rect_obj = text_surface_obj.get_rect()
+        # text_rect_obj.center = (self.x, self.y)
+        # screen.blit(text_surface_obj, text_rect_obj)
+
 
     # 1. camera update the measurements and give biased measurement
     # 2. rob 
@@ -278,7 +307,7 @@ class Robot:
         if(self.start):
             if(self.ternimate() == 1):         
                     # 2. robot decide where to go                 
-                    [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
+                    [v, omega] = self.go_to_goal()
                     # 3. robot execute the decision
                     self.update_movement(v, omega)
                     # 4. robot receive the information where it is
@@ -296,7 +325,9 @@ class Robot:
                     goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)
                     goalX[1] = random.uniform(0.1*screen_height, 0.9*screen_height)
         else:
-            [v, omega] = self.random_moving(self.omega0)
+            [v, omega] = self.random_moving(0)
+            print(self.omega0)
+            print(self.phi0)
             # [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
             self.update_movement(v, omega)
             self.update_measurement_statr(v, omega, camera)

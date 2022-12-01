@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+import math
 
 
-N = 3
+N = 10
 MARKERSIZE = 2
 
 def storing(filename, records):
@@ -18,45 +20,68 @@ def storing(filename, records):
     return records
 
 if(__name__ == '__main__'):
-    f_desired_trajectory = open("data//desired_trajectory.txt", "r")
+    f_odometry = open("data//odometry.txt", "r")
     f_biased_trajectory = open("data//biased_trajectory.txt", "r")
     f_estimation = open("data//estimation.txt", "r")
     f_measurement_bias = open("data//measurement_bias.txt", "r")
     f_measurement_true = open("data//measurement_true.txt", "r")
     f_measurement_Kalman = open("data//measurement_Kalman.txt", "r")
-    desired_trajectory = []; biased_trajectory = []; estimation = []; measurement_bias = []; measurement_true = []; measurement_Kalman = []
+    odometry = []; biased_trajectory = []; estimation = []; measurement_bias = []; measurement_true = []; measurement_Kalman = []
     
-    desired_trajectory = storing(f_desired_trajectory, desired_trajectory)
+    odometry = storing(f_odometry, odometry)
     biased_trajectory = storing(f_biased_trajectory, biased_trajectory)
     estimation = storing(f_estimation, estimation)
     measurement_bias = storing(f_measurement_bias, measurement_bias)
     measurement_true = storing(f_measurement_true, measurement_true)
     measurement_Kalman = storing(f_measurement_Kalman, measurement_Kalman)
     
-    plt.figure(figsize=(8, 6), dpi = 80)
+    
     
     flag = 1
+    indicator = np.zeros((1, N), dtype = float)
+    indicator = indicator[0]
+
     
-    if(flag):
-        # for i in range(0, 1):
-        i = 2
-        # plt.plot(desired_trajectory['x'], -desired_trajectory['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
-        # plt.plot(biased_trajectory['x'], -biased_trajectory['y'], '*', markersize = MARKERSIZE, label = "biased trajectory")
-        plt.plot(estimation['x'][i::3]+1, -estimation['y'][i::3], '*', markersize = MARKERSIZE, label = "estimated position")
-        # plt.plot(measurement_bias['x'][i::3], -measurement_bias['y'][i::3], '*', markersize = MARKERSIZE, label = "biased measurement")        
-        plt.plot(measurement_true['x'][i::3], -measurement_true['y'][i::3], '*', markersize = MARKERSIZE, label = "true position")
-        # plt.plot(measurement_Kalman['x'][0::3], -measurement_Kalman['y'][0::3], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
+    for i in range(N):
         
-        plt.title("trajectories with odometry only")
+        for j in range(int(len(estimation) / N)):
+            dist = math.sqrt((estimation['x'][i + N*j] - measurement_true['x'][i + N*j])**2 + (estimation['y'][i + N*j] - measurement_true['y'][i + N*j])**2)
+            indicator[i] = indicator[i] + dist
+    print(indicator)
+    print(sum(indicator))
+    if(flag):
+        for i in range(0, N):
+            plt.figure(figsize=(8, 6), dpi = 80)
+            # plt.plot(desired_trajectory['x'], -desired_trajectory['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
+            # plt.plot(odometry['x'][i::N], -odometry['y'][i::N], '*', markersize = MARKERSIZE, label = "odometry")
+            plt.plot(estimation['x'][i::N], -estimation['y'][i::N], '*', markersize = MARKERSIZE, label = "estimated position")
+            # plt.plot(measurement_bias['x'][i::N], -measurement_bias['y'][i::N] + 10, '*', markersize = MARKERSIZE, label = "biased measurement")        
+            plt.plot(measurement_true['x'][i::N], -measurement_true['y'][i::N], '*', markersize = MARKERSIZE, label = "true position")
+            # plt.plot(measurement_Kalman['x'][0::N], -measurement_Kalman['y'][0::N], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
+            
+            # dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
+            
+            # idicator[i] = idicator[i] + dist
+            
+            
+            plt.title("robot" + str(i) + " trajectories")
+            plt.xlabel('x'); plt.ylabel('y'); 
+            plt.legend()
+            
+            plt.savefig('pics/robot' + str(i) + '.png')
         
     else:
-        plt.plot(desired_trajectory['x'], -desired_trajectory['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
+        plt.plot(odometry['x'], -odometry['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
         # plt.plot(biased_trajectory['x'], -biased_trajectory['y'], '*', markersize = MARKERSIZE, label = "biased trajectory")
         plt.plot(measurement_true['x'], -measurement_true['y'], '*', markersize = MARKERSIZE, label = "true measurement")
         plt.plot(measurement_bias['x'], -measurement_bias['y'], '*', markersize = MARKERSIZE, label = "biased measurement")
         # plt.plot(measurement_Kalman['x'], -measurement_Kalman['y'], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
         plt.title("trajectories without Kalman")
         
-    plt.xlabel('x'); plt.ylabel('y'); 
-    plt.legend()
     plt.show()
+    
+    
+    
+    
+    
+    

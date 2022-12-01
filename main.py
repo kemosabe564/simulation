@@ -14,27 +14,33 @@ if(__name__ == '__main__'):
     measurement_true_file = open('data\\measurement_true.txt', 'w')
     measurement_bias_file = open('data\\measurement_bias.txt', 'w')
     estimation_file = open('data\\estimation.txt', 'w')
-    desired_trajectory_file = open('data\\desired_trajectory.txt', 'w')
+    odometry_file = open('data\\odometry.txt', 'w')
     biased_trajectory_file = open('data\\biased_trajectory.txt', 'w')
-    file_list = [measurement_Kalman_file, measurement_true_file, measurement_bias_file, estimation_file, desired_trajectory_file, biased_trajectory_file]
+    file_list = [measurement_Kalman_file, measurement_true_file, measurement_bias_file, estimation_file, odometry_file, biased_trajectory_file]
     
     # init
     screen_width = 1080; screen_height = 640
     screen = pygame.display.set_mode([screen_width, screen_height], DOUBLEBUF)
     
     robot_l = 15; robot_b = 6 
-    goalX = np.array([[600, 400], [600, 100], [900, 300]])#, [400, 500], [600, 400], [1000, 500], [1000, 100], [600, 600], [100, 100], [100, 400]])    # goal position
+    goalX = np.array([[600, 400], [600, 100], [900, 300], [400, 500], [600, 400], [1000, 500], [1000, 100], [600, 600], [100, 100], [100, 400]])    # goal position
     
     setup = {"vmax":0.5, "gtg_scaling":0.0001, "K_p":0.01, "ao_scaling":0.00005}
     
     # init robots
-    robots_x = np.array([100, 100, 100])#, 200, 200, 300, 400, 500, 700, 900])
-    robots_y = np.array([100, 200, 400])#,  50, 300, 500, 300, 400, 100, 400])
-    robots_phi = np.array([0, 0, 0])# , 0, 0, 0, 0, 0, 0, 0])
+    robots_x = np.array([100, 100, 100, 200, 200, 300, 400, 500, 700, 900])
+    robots_y = np.array([100, 200, 400,  50, 300, 500, 300, 400, 100, 400])
+    
+    # robots_x = np.array([100, 100, 150])#, 200, 200, 300, 400, 500, 700, 900])
+    # robots_y = np.array([100, 150, 100])#,  50, 300, 500, 300, 400, 100, 400])    
+    
+    robots_phi = np.array([0, 0, 0 , 0, 0, 0, 0, 0, 0, 0])
+    
+    omega0 = np.array([0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0])
     
     robots_num = len(robots_x)
     
-    robots = Robots(robots_num, robots_x, robots_y, robots_phi, goalX, setup)
+    robots = Robots(robots_num, robots_x, robots_y, robots_phi, omega0, goalX, setup)
     
     K_filter = Kalman()    
     
@@ -58,8 +64,8 @@ if(__name__ == '__main__'):
             measurement_bias_file.write("\n")
             estimation_file.write((str(format(robot.estimation[0], '.6f')) + " " + str(format(robot.estimation[1], '.6f')) + " " + str(format(robot.estimation[2], '.6f'))))
             estimation_file.write("\n")
-            desired_trajectory_file.write((str(format(robot.desired_trajectory[0], '.6f')) + " " + str(format(robot.desired_trajectory[1], '.6f')) + " " + str(format(robot.desired_trajectory[2], '.6f'))))
-            desired_trajectory_file.write("\n")
+            odometry_file.write((str(format(robot.odometry[0], '.6f')) + " " + str(format(robot.odometry[1], '.6f')) + " " + str(format(robot.odometry[2], '.6f'))))
+            odometry_file.write("\n")
             biased_trajectory_file.write((str(format(robot.biased_trajectory[0], '.6f')) + " " + str(format(robot.biased_trajectory[1], '.6f')) + " " + str(format(robot.biased_trajectory[2], '.6f'))))
             biased_trajectory_file.write("\n")
         
@@ -85,7 +91,7 @@ if(__name__ == '__main__'):
             
         
         
-        clock.tick(500)     # To limit fps, controls speed of the animation
+        clock.tick(800)     # To limit fps, controls speed of the animation
         fps = (frames*1000)/(pygame.time.get_ticks() - ticks)   # calculate current fps
         
         # Update PyGame display
