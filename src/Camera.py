@@ -26,11 +26,11 @@ class Camera:
         
     def measurement_merge_perturb(self, robots):
         self.measurement_list = []
-        K1 = 0.05; K2 = 0 
-        w1 = 0.1; w2 = 0.1; w3 = 0
-        perturb = True
+        mu = 0.0; sig_x = 0.005; sig_y = 0.005; sig_phi = 0.0
         
-        
+        # K1 = 0.05; K2 = 0 
+        # w1 = 0.1; w2 = 0.1; w3 = 0
+        # perturb = True
         
         robot_list = np.zeros((1, self.number), dtype = int)
         robot_list = robot_list[0]
@@ -51,23 +51,22 @@ class Camera:
                     sum_x = sum_x + robots.robots_list[j].x
                     sum_y = sum_y + robots.robots_list[j].y
             temp = random.uniform(0, 1)
-            if(temp < 0.9):
+            if(temp < 0.95):
                 self.measurement_list.append([sum_x/count, sum_y/count, robots.robots_list[i].phi])
         
         
         for item in self.measurement_list:
-            item[0] = item[0] + K1*random.uniform(-w1*item[0], w1*item[0])
-            item[1] = item[1] + K1*random.uniform(-w2*item[1], w2*item[1])
-            item[2] = item[2] + K2*random.uniform(-w3*item[2], w3*item[2])                
-        
-        
-        
-        # for item in robots.distance_map:
             
-        #     self.measurement_list.append(self.position_list[item])
+            # item[0] = item[0] + K1*random.uniform(-w1*item[0], w1*item[0])
+            # item[1] = item[1] + K1*random.uniform(-w2*item[1], w2*item[1])
+            # item[2] = item[2] + K2*random.uniform(-w3*item[2], w3*item[2])    
+            item[0] = item[0] + np.random.normal(mu, sig_x, 1)[0]
+            item[1] = item[1] + np.random.normal(mu, sig_y, 1)[0]
+            item[2] = item[2] + np.random.normal(mu, sig_phi, 1)[0]                
+
 
         # print(self.measurement_list) 
-        print(len(self.measurement_list))
+        # print(len(self.measurement_list))
 
 
         

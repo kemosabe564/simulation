@@ -7,6 +7,8 @@ from src.Robots import *
 from src.Kalman import *
 from src.Camera import *
 
+from src.setup import *
+
 if(__name__ == '__main__'):
     
     # open the file    
@@ -33,8 +35,8 @@ if(__name__ == '__main__'):
     
     # robots_x = np.array([100, 100, 150])#, 200, 200, 300, 400, 500, 700, 900])
     # robots_y = np.array([100, 150, 100])#,  50, 300, 500, 300, 400, 100, 400])    
-    
-    robots_phi = np.array([0, 0, 0 , 0, 0, 0, 0, 0, 0, 0])
+    a = math.pi
+    robots_phi = 1.05 * np.array([a, a, a, a, a, a, a, a, a, a])
     
     omega0 = np.array([0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0])
     
@@ -45,6 +47,11 @@ if(__name__ == '__main__'):
     K_filter = Kalman()    
     
     camera = Camera(robots_num, robots_x, robots_y, robots_phi)
+    
+    np.random.seed(100)
+    
+    SEED = np.random.randint(1000000, size=(1, robots_num))
+    SEED = SEED[0]
     
     pygame.init()
     pygame.display.set_caption('Unicycle robot')
@@ -87,7 +94,7 @@ if(__name__ == '__main__'):
         robots.update_distance_table()
         
         
-        robots.robots_simulation_loop(goalX, K_filter, camera)
+        robots.robots_simulation_loop(goalX, K_filter, camera, SEED)
             
         
         

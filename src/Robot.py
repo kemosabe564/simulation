@@ -23,7 +23,10 @@ class Robot:
         self.moving = True
         # whether the robot updates its init points
         self.start = True
-        
+        # whether there is a picture before?
+        self.picture = False
+        self.last_picture = []
+        self.last_angle = 0
         # buffer
         
         self.position_buffer = []
@@ -34,7 +37,7 @@ class Robot:
         # angle -0.0001 0.0001
         self.x0 = init_x
         self.y0 = init_y
-        self.phi0 = init_phi
+        self.phi0 = init_phi * 1.0
         self.omega0 = omega0
         
         # for logging data
@@ -42,8 +45,8 @@ class Robot:
         self.biased_trajectory = np.array([self.x, self.y, self.phi], float)
         
         
-        self.odometry = np.array([self.x, self.y, self.phi], float)
-        self.estimation = np.array([self.x, self.y, self.phi], float)
+        self.odometry = np.array([self.x, self.y, self.phi0], float)
+        self.estimation = np.array([self.x, self.y, self.phi0], float)
         self.measurement_true = np.array([self.x, self.y, self.phi], float)
         self.measurement_bias = np.array([self.x, self.y, self.phi], float)
         
@@ -69,10 +72,14 @@ class Robot:
 
     
     def states_perturb(self, v0 = 0.0, omega0 = 0.0):
-        K1 = 1; K2 = 0.5
-        w1 = 0.5; w2 = 0.5
-        v = v0 + K1*random.uniform(-w1*v0, w1*v0) + 0.000
-        omega = omega0 + K2*random.uniform(-w2*omega0, w2*omega0) + 0.000
+        mu = 0.0; sig_v = 0.01; sig_omega = 0.0001
+        # K1 = 1; K2 = 0.5
+        # w1 = 0.5; w2 = 0.5
+        # v = v0 + K1*random.uniform(-w1*v0, w1*v0) + 0.000
+        # omega = omega0 + K2*random.uniform(-w2*omega0, w2*omega0) + 0.000
+        v = v0 + np.random.normal(mu, sig_v, 1)[0]
+        omega = omega0 + np.random.normal(mu, sig_omega, 1)[0]
+        
         return [v, omega]
 
         
@@ -203,6 +210,28 @@ class Robot:
             return
         
         # if the robot decide to receive an update from the camera
+        if((self.timer + 1) % 5 == 0):
+            if(self.moving):
+                MAX_dist = 10 * screen_width + 10 * screen_height; i = 0; idx = 0
+                for item in camera.measurement_list:
+                    dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
+                    if(dist < MAX_dist):
+                        MAX_dist = dist
+                        idx = i
+                    i += 1
+                # print(self.idx, ":")
+                # print(camera.measurement_list[idx])
+                if(MAX_dist > 100):
+                    self.last_picture = []
+                    # self.picture = False
+                    return
+                
+                # position (x, y)
+                self.last_picture = camera.measurement_list[idx]
+                # self.measurement_bias = camera.measurement_list[self.idx]
+                
+                self.last_picture[2] = self.estimation[2]
+                
         if(self.timer % 5 == 0):
             
             # if not stop, measurements are pertubed, they could merge together, so the camera will give a "fake" data
@@ -220,11 +249,39 @@ class Robot:
                     i += 1
                 # print(self.idx, ":")
                 # print(camera.measurement_list[idx])
-                if(MAX_dist > 200):
+                if(MAX_dist > 100):
+                    # self.picture = False
                     return
+                
+                # position (x, y)
                 self.measurement_bias = camera.measurement_list[idx]
                 # self.measurement_bias = camera.measurement_list[self.idx]
-
+                
+                self.measurement_bias[2] = self.estimation[2]
+                if(len(self.last_picture) > 0):
+                    delta_angle = math.atan2((self.measurement_bias[0] - self.last_picture[0]), (self.measurement_bias[1] - self.last_picture[1]))
+                    delta_angle0 = math.atan2((self.estimation[0] - self.last_picture[0]), (self.estimation[1] - self.last_picture[1]))
+                    # delta_angle = math.atan2(self.measurement_bias[0], self.measurement_bias[1])
+                    # delta_angle0 = math.atan2(self.measurement_bias[0], self.measurement_bias[1])
+                
+                    # if(self.idx == 0):
+                    #     print(self.last_picture)
+                    #     print(self.estimation)
+                        
+                    #     print(self.measurement_bias)
+                    #     print(delta_angle)
+                    #     print(delta_angle0)
+                        # print((delta_angle0 - delta_angle) % math.pi)
+                        # print(omega)
+                    # if(abs(delta_angle0 - delta_angle)% math.pi > 0.5*math.pi):
+                        
+                    # self.measurement_bias[2] = self.last_picture[2] + delta_angle
+                    # self.estimation[2] = self.estimation[2] + delta_angle
+                        # self.estimation[0] = self.measurement_bias[0]
+                        # self.estimation[1] = self.measurement_bias[1]
+                        # k_filter.Q_k = np.array([[0.05,     0,     0],
+                        #                         [    0, 0.05,     0],
+                        #                         [    0,     0, 0.05]])
             K = 1
                 
             if(K):
@@ -272,6 +329,12 @@ class Robot:
         # phi_biased = math.atan2(e_biased[1], e_biased[0])
          
         omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.estimation[2]), math.cos(phi_d - self.estimation[2]))     # Only P part of a PID controller to give omega as per desired heading
+        omega_MAX = 0.5*math.pi
+        if(omega > omega_MAX):
+            omega = omega_MAX
+        elif(omega < -omega_MAX):
+            omega = -omega_MAX
+        
         # omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.measurement_bias[2]), math.cos(phi_d - self.measurement_bias[2]))     # Only P part of a PID controller to give omega as per desired heading
         # omega0 = self.data["K_p"]*math.atan2(math.sin(phi_d0 - self.desired_trajectory[2]), math.cos(phi_d0 - self.desired_trajectory[2]))     # Only P part of a PID controller to give omega as per desired heading
         # omega_biased = self.data["K_p"]*math.atan2(math.sin(phi_biased - self.measurement_bias[2]), math.cos(phi_biased - self.measurement_bias[2]))
@@ -302,7 +365,7 @@ class Robot:
 
     # 1. camera update the measurements and give biased measurement
     # 2. rob 
-    def robot_loop(self, goalX, K_filter, camera):
+    def robot_loop(self, goalX, K_filter, camera, SEED):
         
         if(self.start):
             if(self.ternimate() == 1):         
@@ -315,9 +378,11 @@ class Robot:
                     # print(v, omega)
                     
             else:
+                # random.seed(SEED)
                 # if the robot reaches its end, make it stop and change another goal point      
                 self.update_movement(0, 0)
                 self.update_measurement(0, 0, K_filter, camera)
+                
                 # update new GoalX
                 goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)
                 goalX[1] = random.uniform(0.1*screen_height, 0.9*screen_height)

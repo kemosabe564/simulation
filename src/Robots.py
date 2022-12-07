@@ -44,7 +44,7 @@ class Robots:
         # print(self.distance_map)
         # print(self.distance_table)             
         
-    def robots_simulation_loop(self, goalX, K_filter, camera):
+    def robots_simulation_loop(self, goalX, K_filter, camera, SEED):
         
         # 1. camera update the measurements and give biased measurement
         # 2. robot decide where to go
@@ -59,7 +59,7 @@ class Robots:
             
             
         for i in range(self.number):
-            self.robots_list[i].robot_loop(goalX[i], K_filter, camera)
+            self.robots_list[i].robot_loop(goalX[i], K_filter, camera, SEED[i])
 
 
 
