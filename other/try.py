@@ -1,5 +1,7 @@
 import numpy as np
 import math
+
+import matplotlib as plot
 lst1 = [2, 3, 4, 1, 1, 5]
 
 lst2 = list(set(lst1))
