@@ -3,7 +3,6 @@ import numpy as np
 import pygame
 from pygame.locals import *
 
-
 from src.Robots import *
 from src.Kalman import *
 from src.Camera import *
