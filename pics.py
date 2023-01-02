@@ -47,37 +47,25 @@ if(__name__ == '__main__'):
         for j in range(int(len(estimation) / N)):
             dist = math.sqrt((estimation['x'][i + N*j] - measurement_true['x'][i + N*j])**2 + (estimation['y'][i + N*j] - measurement_true['y'][i + N*j])**2)
             indicator[i] = indicator[i] + dist
-    print(indicator)
-    print(sum(indicator))
+    print(indicator/int(len(estimation) / N))
+    print(sum(indicator)/int(len(estimation) / N))
+    
+    
     if(flag):
         for i in range(0, N):
             plt.figure(figsize=(8, 6), dpi = 80)
             # plt.plot(desired_trajectory['x'], -desired_trajectory['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
             # plt.plot(odometry['x'][i::N], -odometry['y'][i::N], '*', markersize = MARKERSIZE, label = "odometry")
             plt.plot(estimation['x'][i::N], -estimation['y'][i::N], '*', markersize = MARKERSIZE, label = "estimated position")
-            # plt.plot(measurement_bias['x'][i::N], -measurement_bias['y'][i::N] + 10, '*', markersize = MARKERSIZE, label = "biased measurement")        
             plt.plot(measurement_true['x'][i::N], -measurement_true['y'][i::N], '*', markersize = MARKERSIZE, label = "true position")
             # plt.plot(measurement_Kalman['x'][0::N], -measurement_Kalman['y'][0::N], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
-            
-            # dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
-            
-            # idicator[i] = idicator[i] + dist
-            
             
             plt.title("robot" + str(i) + " trajectories")
             plt.xlabel('x'); plt.ylabel('y'); 
             plt.legend()
             
             plt.savefig('pics/robot' + str(i) + '.png')
-        
-    else:
-        plt.plot(odometry['x'], -odometry['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
-        # plt.plot(biased_trajectory['x'], -biased_trajectory['y'], '*', markersize = MARKERSIZE, label = "biased trajectory")
-        plt.plot(measurement_true['x'], -measurement_true['y'], '*', markersize = MARKERSIZE, label = "true measurement")
-        plt.plot(measurement_bias['x'], -measurement_bias['y'], '*', markersize = MARKERSIZE, label = "biased measurement")
-        # plt.plot(measurement_Kalman['x'], -measurement_Kalman['y'], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
-        plt.title("trajectories without Kalman")
-        
+    
     plt.show()
     
     

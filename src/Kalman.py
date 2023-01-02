@@ -34,11 +34,7 @@ class Kalman:
         self.P_k_1 = np.array([[0.1,   0,   0],
                                [  0, 0.1,   0],
                                [  0,   0, 0.1]])
-    def getB(self, phi, dk):
-        B_K = np.array([[math.cos(phi)*dk, 0],
-                        [math.sin(phi)*dk, 0],
-                        [0, dk]])
-        return B_K
+
  
     def EKF(self, z_k, state_estimate_k, u_k_1, dk = 1):
 
@@ -84,3 +80,5 @@ class Kalman:
     
     def multirate_KF(self, z_k, state_estimate_k, u_k_1, dk = 1):
         print(10)
+        
+        

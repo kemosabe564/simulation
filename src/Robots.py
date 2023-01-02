@@ -2,11 +2,9 @@ import numpy as np
 import math
 import random
 
-screen_width = 1080
-screen_height = 640
+from src.setup import *
 
 from src.Robot import *
-
 
 
 class Robots:
@@ -57,7 +55,7 @@ class Robots:
         camera.measurement_merge_perturb(self)
             
             
-            
+        # 2 ~ 4 in the function robot_loop()    
         for i in range(self.number):
             self.robots_list[i].robot_loop(goalX[i], K_filter, camera, SEED[i])
 

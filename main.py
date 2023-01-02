@@ -21,26 +21,7 @@ if(__name__ == '__main__'):
     file_list = [measurement_Kalman_file, measurement_true_file, measurement_bias_file, estimation_file, odometry_file, biased_trajectory_file]
     
     # init
-    screen_width = 1080; screen_height = 640
     screen = pygame.display.set_mode([screen_width, screen_height], DOUBLEBUF)
-    
-    robot_l = 15; robot_b = 6 
-    goalX = np.array([[600, 400], [600, 100], [900, 300], [400, 500], [600, 400], [1000, 500], [1000, 100], [600, 600], [100, 100], [100, 400]])    # goal position
-    
-    setup = {"vmax":0.5, "gtg_scaling":0.0001, "K_p":0.01, "ao_scaling":0.00005}
-    
-    # init robots
-    robots_x = np.array([100, 100, 100, 200, 200, 300, 400, 500, 700, 900])
-    robots_y = np.array([100, 200, 400,  50, 300, 500, 300, 400, 100, 400])
-    
-    # robots_x = np.array([100, 100, 150])#, 200, 200, 300, 400, 500, 700, 900])
-    # robots_y = np.array([100, 150, 100])#,  50, 300, 500, 300, 400, 100, 400])    
-    a = math.pi
-    robots_phi = 1.05 * np.array([a, a, a, a, a, a, a, a, a, a])
-    
-    omega0 = np.array([0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0])
-    
-    robots_num = len(robots_x)
     
     robots = Robots(robots_num, robots_x, robots_y, robots_phi, omega0, goalX, setup)
     
@@ -76,30 +57,30 @@ if(__name__ == '__main__'):
             biased_trajectory_file.write((str(format(robot.biased_trajectory[0], '.6f')) + " " + str(format(robot.biased_trajectory[1], '.6f')) + " " + str(format(robot.biased_trajectory[2], '.6f'))))
             biased_trajectory_file.write("\n")
         
-        # print(robot.measurement_true)
         event = pygame.event.poll()
         
-        if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE) or frames >= 10000:
+        if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE) or frames >= 7500:
             for item in file_list:
                 item.close()
             break
         
-        screen.fill((50, 55, 60))   # background
+        # background
+        screen.fill((50, 55, 60))   
         
+        # Draw goal
         for goal in goalX:
-            pygame.draw.circle(screen, (0,255,0), goal, 8, 0)  # Draw goal
+            pygame.draw.circle(screen, (0,255,0), goal, 8, 0)  
         
         
         robots.robots_display(screen)
-        robots.update_distance_table()
-        
-        
+        robots.update_distance_table()      
         robots.robots_simulation_loop(goalX, K_filter, camera, SEED)
             
         
-        
-        clock.tick(800)     # To limit fps, controls speed of the animation
-        fps = (frames*1000)/(pygame.time.get_ticks() - ticks)   # calculate current fps
+        # To limit fps, controls speed of the animation
+        clock.tick(800)
+        # calculate current fps     
+        fps = (frames*1000)/(pygame.time.get_ticks() - ticks)   
         
         # Update PyGame display
         pygame.display.flip()

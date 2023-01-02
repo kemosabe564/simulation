@@ -29,3 +29,5 @@ print(a/3.14*360)
 
 # a = np.random.normal(0, 0.01, 1)[0]
 # print(a)
+
+print(np.random.normal(0, 0))

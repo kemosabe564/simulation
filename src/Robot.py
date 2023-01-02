@@ -3,10 +3,24 @@ import pygame
 import math
 import random
 
-screen_width = 1080
-screen_height = 640
-N = 10
+from src.setup import *
 
+
+no_sensor = False
+
+if MODE == "normal":
+    no_sensor = True
+    sr_KALMAN = 0
+    mr_KALMAN = 0
+elif MODE == "sr_EKF":
+    no_sensor = False
+    sr_KALMAN = 1
+    mr_KALMAN = 0
+elif MODE == "mr_EKF":
+    no_sensor = False
+    sr_KALMAN = 0
+    mr_KALMAN = 1
+    
 class Robot:
     
     def __init__(self, idx, init_x, init_y, init_phi, omega0, endpoint, robot_l, robot_b, data = []):
@@ -72,7 +86,7 @@ class Robot:
 
     
     def states_perturb(self, v0 = 0.0, omega0 = 0.0):
-        mu = 0.0; sig_v = 0.01; sig_omega = 0.0001
+        mu = 0.0; sig_v = 0.01; sig_omega = 0.0005
         # K1 = 1; K2 = 0.5
         # w1 = 0.5; w2 = 0.5
         # v = v0 + K1*random.uniform(-w1*v0, w1*v0) + 0.000
@@ -115,68 +129,68 @@ class Robot:
         self.bottom_l = [self.bottom[0] - self.b * temp_sin, self.bottom[1] + self.b * temp_cos]
         self.bottom_r = [self.bottom[0] + self.b * temp_sin, self.bottom[1] - self.b * temp_cos]
     
-    def update_measurement_statr(self, v, omega, camera):
-        self.measurement_true = np.array([self.x, self.y, self.phi], float)
-        self.estimation = [self.x0, self.y0, self.phi0]
+    # def update_measurement_statr(self, v, omega, camera):
+    #     self.measurement_true = np.array([self.x, self.y, self.phi], float)
+    #     self.estimation = [self.x0, self.y0, self.phi0]
         
         
-        if(self.timer % 10 == 0):
+    #     if(self.timer % 10 == 0):
             
 
-            i = 0
-            # print(camera.measurement_list)
-            if(len(camera.measurement_list) == 3):
-                self.position_buffer.append([self.x0, self.y0])
-                for item in camera.measurement_list:
+    #         i = 0
+    #         # print(camera.measurement_list)
+    #         if(len(camera.measurement_list) == 3):
+    #             self.position_buffer.append([self.x0, self.y0])
+    #             for item in camera.measurement_list:
             
-                    self.camera_buffer[i].append([item[0], item[1]])
+    #                 self.camera_buffer[i].append([item[0], item[1]])
                     
-                    i += 1
-            # print(self.camera_buffer)
+    #                 i += 1
+    #         # print(self.camera_buffer)
  
-        if(len(self.position_buffer) >= self.buffer_size):
-            self.determine_camera()
+    #     if(len(self.position_buffer) >= self.buffer_size):
+    #         self.determine_camera()
     
-    def determine_camera(self):
-        # print(self.position_buffer)
+    # def determine_camera(self):
+    #     # print(self.position_buffer)
    
-        # print(self.camera_buffer[0])
+    #     # print(self.camera_buffer[0])
         
-        # normalize
-        for i in range(3):
-            base_x = self.camera_buffer[i][0][0]
-            base_y = self.camera_buffer[i][0][1]
-            for j in range(self.buffer_size-1):
-                self.camera_buffer[i][j][0] = self.camera_buffer[i][j][0] - base_x
-                self.camera_buffer[i][j][1] = self.camera_buffer[i][j][1] - base_y
-            # for item in self.camera_buffer[i]:
-            #     item[0] = item[0] - base_x
-            #     item[1] = item[1] - base_y
-        # print(self.camera_buffer[1])        
+    #     # normalize
+    #     for i in range(3):
+    #         base_x = self.camera_buffer[i][0][0]
+    #         base_y = self.camera_buffer[i][0][1]
+    #         for j in range(self.buffer_size-1):
+    #             self.camera_buffer[i][j][0] = self.camera_buffer[i][j][0] - base_x
+    #             self.camera_buffer[i][j][1] = self.camera_buffer[i][j][1] - base_y
+    #         # for item in self.camera_buffer[i]:
+    #         #     item[0] = item[0] - base_x
+    #         #     item[1] = item[1] - base_y
+    #     # print(self.camera_buffer[1])        
             
-        abs_value = []
-        min_dist = 10 * screen_height
-        min_idx = 0
-        for i in range(3):
-            temp = 0
-            for j in range(len(self.position_buffer)):
-                dist = math.sqrt((self.position_buffer[j][0] - self.camera_buffer[i][j][0])**2 + (self.position_buffer[j][1] - self.camera_buffer[i][j][1])**2)
-                temp += dist
+    #     abs_value = []
+    #     min_dist = 10 * screen_height
+    #     min_idx = 0
+    #     for i in range(3):
+    #         temp = 0
+    #         for j in range(len(self.position_buffer)):
+    #             dist = math.sqrt((self.position_buffer[j][0] - self.camera_buffer[i][j][0])**2 + (self.position_buffer[j][1] - self.camera_buffer[i][j][1])**2)
+    #             temp += dist
             
-            if(temp <= min_dist):
-                min_dist = temp
-                min_idx = i
-            abs_value.append(temp)
+    #         if(temp <= min_dist):
+    #             min_dist = temp
+    #             min_idx = i
+    #         abs_value.append(temp)
         
-        print(abs_value)
-        print(min_idx)
+    #     print(abs_value)
+    #     print(min_idx)
         
             
-        # 做些判断，找到最后应该是哪一条camera的信息
-        self.estimation[0] = self.camera_buffer[min_idx][self.buffer_size-1][0]
-        self.estimation[1] = self.camera_buffer[min_idx][self.buffer_size-1][1]
-        # print(self.camera_buffer[0])
-        self.start = True
+    #     # 做些判断，找到最后应该是哪一条camera的信息
+    #     self.estimation[0] = self.camera_buffer[min_idx][self.buffer_size-1][0]
+    #     self.estimation[1] = self.camera_buffer[min_idx][self.buffer_size-1][1]
+    #     # print(self.camera_buffer[0])
+    #     self.start = True
     
     def update_measurement(self, v, omega, k_filter, camera):
 
@@ -194,43 +208,43 @@ class Robot:
         #     k_filter.Q_k = np.array([[0.05,     0,     0],
         #                                 [    0, 0.05,     0],
         #                                 [    0,     0, 0.05]])
-        #     K = 1
+        #     sr_KALMAN = 1
         #     no_sensor = False
         # else:
             
         #     k_filter.Q_k = np.array([[0.000,     0,     0],
         #                                 [    0, 0.000,     0],
         #                                 [    0,     0, 0.000]])
-        #     K = 0    
+        #     sr_KALMAN = 0    
                    
         #     no_sensor = True
-        no_sensor = False
+        
         
         if(no_sensor):      
             return
         
         # if the robot decide to receive an update from the camera
-        if((self.timer + 1) % 5 == 0):
-            if(self.moving):
-                MAX_dist = 10 * screen_width + 10 * screen_height; i = 0; idx = 0
-                for item in camera.measurement_list:
-                    dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
-                    if(dist < MAX_dist):
-                        MAX_dist = dist
-                        idx = i
-                    i += 1
-                # print(self.idx, ":")
-                # print(camera.measurement_list[idx])
-                if(MAX_dist > 100):
-                    self.last_picture = []
-                    # self.picture = False
-                    return
+        # if((self.timer + 1) % 5 == 0):
+        #     if(self.moving):
+        #         MAX_dist = 10 * screen_width + 10 * screen_height; i = 0; idx = 0
+        #         for item in camera.measurement_list:
+        #             dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
+        #             if(dist < MAX_dist):
+        #                 MAX_dist = dist
+        #                 idx = i
+        #             i += 1
+        #         # print(self.idx, ":")
+        #         # print(camera.measurement_list[idx])
+        #         if(MAX_dist > 100):
+        #             self.last_picture = []
+        #             # self.picture = False
+        #             return
                 
-                # position (x, y)
-                self.last_picture = camera.measurement_list[idx]
-                # self.measurement_bias = camera.measurement_list[self.idx]
+        #         # position (x, y)
+        #         self.last_picture = camera.measurement_list[idx]
+        #         # self.measurement_bias = camera.measurement_list[self.idx]
                 
-                self.last_picture[2] = self.estimation[2]
+        #         self.last_picture[2] = self.estimation[2]
                 
         if(self.timer % 5 == 0):
             
@@ -258,33 +272,13 @@ class Robot:
                 # self.measurement_bias = camera.measurement_list[self.idx]
                 
                 self.measurement_bias[2] = self.estimation[2]
-                if(len(self.last_picture) > 0):
-                    delta_angle = math.atan2((self.measurement_bias[0] - self.last_picture[0]), (self.measurement_bias[1] - self.last_picture[1]))
-                    delta_angle0 = math.atan2((self.estimation[0] - self.last_picture[0]), (self.estimation[1] - self.last_picture[1]))
-                    # delta_angle = math.atan2(self.measurement_bias[0], self.measurement_bias[1])
-                    # delta_angle0 = math.atan2(self.measurement_bias[0], self.measurement_bias[1])
+                # if(len(self.last_picture) > 0):
+                #     delta_angle = math.atan2((self.measurement_bias[0] - self.last_picture[0]), (self.measurement_bias[1] - self.last_picture[1]))
+                #     delta_angle0 = math.atan2((self.estimation[0] - self.last_picture[0]), (self.estimation[1] - self.last_picture[1]))
+                    
+            
                 
-                    # if(self.idx == 0):
-                    #     print(self.last_picture)
-                    #     print(self.estimation)
-                        
-                    #     print(self.measurement_bias)
-                    #     print(delta_angle)
-                    #     print(delta_angle0)
-                        # print((delta_angle0 - delta_angle) % math.pi)
-                        # print(omega)
-                    # if(abs(delta_angle0 - delta_angle)% math.pi > 0.5*math.pi):
-                        
-                    # self.measurement_bias[2] = self.last_picture[2] + delta_angle
-                    # self.estimation[2] = self.estimation[2] + delta_angle
-                        # self.estimation[0] = self.measurement_bias[0]
-                        # self.estimation[1] = self.measurement_bias[1]
-                        # k_filter.Q_k = np.array([[0.05,     0,     0],
-                        #                         [    0, 0.05,     0],
-                        #                         [    0,     0, 0.05]])
-            K = 1
-                
-            if(K):
+            if(sr_KALMAN and ~mr_KALMAN):
                 # if we decide to use the Kalman filter to correct the fake measurement 
                 # dist = math.sqrt((self.estimation[0] - self.measurement_bias[0])**2 + (self.estimation[1] - self.measurement_bias[1])**2)
                 # print(len(camera.measurement_list))
@@ -298,54 +292,49 @@ class Robot:
                 self.measurement_Kalman = optimal_state_estimate_k
                 k_filter.P_k_1 = covariance_estimate_k
                 self.estimation = self.measurement_Kalman
+            elif(mr_KALMAN and ~sr_KALMAN):
+                
+                
+                self.estimation = self.measurement_bias
+                
             else:
                 # if we decide not to use the Kalman filter to correct the fake measurement 
                 # then we use the pertubed measurement ans its true 
                 self.estimation = self.measurement_bias
                 
      
-    def random_moving(self, omega):
+    # def random_moving(self, omega):
         v = random.uniform(0.10, 0.20)
         if(self.timer % 5 == 0):
             omega += random.uniform(-0.000, 0.000)
         return [v, omega] 
                                     
     def go_to_goal(self):
-        # self.goal = endpoints
         # e = self.data["goalX"] - [self.measurement_Kalman[0], self.measurement_bias[1]]     # error in position
         e = self.goalX - [self.estimation[0], self.estimation[1]]     # error in position
-        # e = self.goalX - [self.measurement_bias[0], self.measurement_bias[1]]     # error in position
 
-        # e0 = self.goalX - [self.desired_trajectory[0], self.desired_trajectory[1]] 
-        # e_biased = self.goalX - [self.measurement_bias[0], self.measurement_bias[1]] 
-        # K = self.data["vmax"] * (1 - np.exp(- self.data["gtg_scaling"] * np.linalg.norm(e)**2)) / np.linalg.norm(e)     # Scaling for velocity
-        K = [-0.001, -0.001]
-        v = np.linalg.norm(K * e)   # Velocity decreases as bot gets closer to goal
-        # v0 = np.linalg.norm(K * e0)
-        # v_biased = np.linalg.norm(K * e_biased)
+        # K_P = self.data["vmax"] * (1 - np.exp(- self.data["gtg_scaling"] * np.linalg.norm(e)**2)) / np.linalg.norm(e)     # Scaling for velocity
+        K_P = [-0.001, -0.001]
+        v = np.linalg.norm(K_P * e)   # Velocity decreases as bot gets closer to goal
+
         
         phi_d = math.atan2(e[1], e[0])  # Desired heading
-        # phi_d0 = math.atan2(e0[1], e0[0]) 
-        # phi_biased = math.atan2(e_biased[1], e_biased[0])
+
          
         omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.estimation[2]), math.cos(phi_d - self.estimation[2]))     # Only P part of a PID controller to give omega as per desired heading
-        omega_MAX = 0.5*math.pi
+        omega_MAX = 0.5 * PI
         if(omega > omega_MAX):
             omega = omega_MAX
         elif(omega < -omega_MAX):
             omega = -omega_MAX
         
-        # omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.measurement_bias[2]), math.cos(phi_d - self.measurement_bias[2]))     # Only P part of a PID controller to give omega as per desired heading
-        # omega0 = self.data["K_p"]*math.atan2(math.sin(phi_d0 - self.desired_trajectory[2]), math.cos(phi_d0 - self.desired_trajectory[2]))     # Only P part of a PID controller to give omega as per desired heading
-        # omega_biased = self.data["K_p"]*math.atan2(math.sin(phi_biased - self.measurement_bias[2]), math.cos(phi_biased - self.measurement_bias[2]))
-        
-        return [v, omega]#, v0, omega0, v_biased, omega_biased]
+        return [v, omega]
 
 
     def ternimate(self):
-        K = 30.0
+        MAX_length = 30.0
         distance = math.sqrt((self.goalX[0] - self.x)**2 + (self.goalX[1] - self.y)**2)
-        if(distance < K):
+        if(distance < MAX_length):
             self.moving = 0
             return 0
         else:
@@ -364,7 +353,7 @@ class Robot:
 
 
     # 1. camera update the measurements and give biased measurement
-    # 2. rob 
+    
     def robot_loop(self, goalX, K_filter, camera, SEED):
         
         if(self.start):
@@ -390,12 +379,12 @@ class Robot:
                     goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)
                     goalX[1] = random.uniform(0.1*screen_height, 0.9*screen_height)
         else:
-            [v, omega] = self.random_moving(0)
+            # [v, omega] = self.random_moving(0)
             print(self.omega0)
             print(self.phi0)
-            # [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
-            self.update_movement(v, omega)
-            self.update_measurement_statr(v, omega, camera)
+            # # [v, omega, v0, omaga0, v_biased, omega_biased] = self.go_to_goal()
+            # self.update_movement(v, omega)
+            # self.update_measurement_statr(v, omega, camera)
             
             
             # if(self.timer == 500):
