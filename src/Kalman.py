@@ -17,16 +17,16 @@ class Kalman:
         # state_noise
         self.process_noise_v_k_minus_1 = np.array([0.00, 0.00, 0.000])
 
-        self.Q_k = np.array([[0.0005,     0,     0],
-                             [    0, 0.0005,     0],
+        self.Q_k = np.array([[0.001,     0,     0],
+                             [    0, 0.001,     0],
                              [    0,     0,  0.0005]])
              
         self.H_k = np.array([[1.0,   0,   0],
                              [  0, 1.0,   0],
                              [  0,   0, 1.0]])
                         
-        self.R_k = np.array([[1.0,   0,    0],
-                             [  0, 1.0,    0],
+        self.R_k = np.array([[0.5,   0,    0],
+                             [  0, 0.5,    0],
                              [  0,    0, 1.0]]) 
          
         self.sensor_noise_w_k = np.array([0.00, 0.00, 0.00])
@@ -78,7 +78,31 @@ class Kalman:
         # Return the updated state and covariance estimates
         return optimal_state_estimate_k, P_k
     
-    def multirate_KF(self, z_k, state_estimate_k, u_k_1, dk = 1):
-        print(10)
+    
+    def get_B_M(self, t):
         
+        B_M = self.H_k
+        
+        for i in range(t-1):
+            B_M = np.concatenate((B_M, self.H_k), axis = 1)
+
+        return B_M
+    
+    def multirate_KF(self, z_k_M, state_estimate_k_M, u_k_1, dk = 1):
+        
+        B_M = self.get_B_M(5)
+        
+        P_k_M = self.A_k_1 @ self.P_k_1 @ self.A_k_1.T + 5 * self.Q_k
+        
+        measurement_residual_y_k = z_k_M - ((self.H_k @ state_estimate_k_M) + (self.sensor_noise_w_k))
+        
+        S_k_M = self.H_k @ P_k_M @ self.H_k.T + self.R_k
+        
+        K_k_M = P_k_M @ self.H_k.T @ np.linalg.pinv(S_k_M)
+        
+        optimal_state_estimate_k_M = state_estimate_k_M + (K_k_M @ measurement_residual_y_k)
+        
+        P_k_M = P_k_M - (K_k_M @ self.H_k @ P_k_M)
+        
+        return optimal_state_estimate_k_M, P_k_M
         

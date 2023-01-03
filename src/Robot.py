@@ -37,10 +37,7 @@ class Robot:
         self.moving = True
         # whether the robot updates its init points
         self.start = True
-        # whether there is a picture before?
-        self.picture = False
-        self.last_picture = []
-        self.last_angle = 0
+        
         # buffer
         
         self.position_buffer = []
@@ -203,49 +200,24 @@ class Robot:
         
         
         self.estimation = self.states_transform(v, omega, self.estimation)
- 
-        # if(len(camera.measurement_list) == N):
-        #     k_filter.Q_k = np.array([[0.05,     0,     0],
-        #                                 [    0, 0.05,     0],
-        #                                 [    0,     0, 0.05]])
-        #     sr_KALMAN = 1
-        #     no_sensor = False
-        # else:
-            
-        #     k_filter.Q_k = np.array([[0.000,     0,     0],
-        #                                 [    0, 0.000,     0],
-        #                                 [    0,     0, 0.000]])
-        #     sr_KALMAN = 0    
-                   
-        #     no_sensor = True
-        
+
         
         if(no_sensor):      
             return
         
-        # if the robot decide to receive an update from the camera
-        # if((self.timer + 1) % 5 == 0):
-        #     if(self.moving):
-        #         MAX_dist = 10 * screen_width + 10 * screen_height; i = 0; idx = 0
-        #         for item in camera.measurement_list:
-        #             dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
-        #             if(dist < MAX_dist):
-        #                 MAX_dist = dist
-        #                 idx = i
-        #             i += 1
-        #         # print(self.idx, ":")
-        #         # print(camera.measurement_list[idx])
-        #         if(MAX_dist > 100):
-        #             self.last_picture = []
-        #             # self.picture = False
-        #             return
-                
-        #         # position (x, y)
-        #         self.last_picture = camera.measurement_list[idx]
-        #         # self.measurement_bias = camera.measurement_list[self.idx]
-                
-        #         self.last_picture[2] = self.estimation[2]
-                
+        # 
+        optimal_state_estimate_k, covariance_estimate_k = k_filter.EKF(self.odometry, self.estimation, [v, omega], 1)
+        # obs_vector_z_k = self.measurement_bias, # Most recent sensor measurement
+        # state_estimate_k_1 = self.estimation, # Our most recent estimate of the state
+        # u_k_1 = [v, omega], # Our most recent control input
+        # P_k_1, # Our most recent state covariance matrix
+        # dk = 1 # Time interval            
+        self.measurement_Kalman = optimal_state_estimate_k
+        k_filter.P_k_1 = covariance_estimate_k
+        self.estimation = self.measurement_Kalman
+        
+        
+        # the camera information is coming        
         if(self.timer % 5 == 0):
             
             # if not stop, measurements are pertubed, they could merge together, so the camera will give a "fake" data
@@ -264,7 +236,6 @@ class Robot:
                 # print(self.idx, ":")
                 # print(camera.measurement_list[idx])
                 if(MAX_dist > 100):
-                    # self.picture = False
                     return
                 
                 # position (x, y)
@@ -272,10 +243,7 @@ class Robot:
                 # self.measurement_bias = camera.measurement_list[self.idx]
                 
                 self.measurement_bias[2] = self.estimation[2]
-                # if(len(self.last_picture) > 0):
-                #     delta_angle = math.atan2((self.measurement_bias[0] - self.last_picture[0]), (self.measurement_bias[1] - self.last_picture[1]))
-                #     delta_angle0 = math.atan2((self.estimation[0] - self.last_picture[0]), (self.estimation[1] - self.last_picture[1]))
-                    
+           
             
                 
             if(sr_KALMAN and ~mr_KALMAN):

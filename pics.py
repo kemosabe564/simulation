@@ -26,7 +26,9 @@ if(__name__ == '__main__'):
     f_measurement_bias = open("data//measurement_bias.txt", "r")
     f_measurement_true = open("data//measurement_true.txt", "r")
     f_measurement_Kalman = open("data//measurement_Kalman.txt", "r")
-    odometry = []; biased_trajectory = []; estimation = []; measurement_bias = []; measurement_true = []; measurement_Kalman = []
+    f_MSE = open("data//MSE.txt", "r")
+    
+    odometry = []; biased_trajectory = []; estimation = []; measurement_bias = []; measurement_true = []; measurement_Kalman = []; MSE = []
     
     odometry = storing(f_odometry, odometry)
     biased_trajectory = storing(f_biased_trajectory, biased_trajectory)
@@ -52,10 +54,10 @@ if(__name__ == '__main__'):
     
     
     if(flag):
-        for i in range(0, N):
+        for i in range(0, 1):
             plt.figure(figsize=(8, 6), dpi = 80)
             # plt.plot(desired_trajectory['x'], -desired_trajectory['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
-            # plt.plot(odometry['x'][i::N], -odometry['y'][i::N], '*', markersize = MARKERSIZE, label = "odometry")
+            plt.plot(odometry['x'][i::N], -odometry['y'][i::N], '*', markersize = MARKERSIZE, label = "odometry")
             plt.plot(estimation['x'][i::N], -estimation['y'][i::N], '*', markersize = MARKERSIZE, label = "estimated position")
             plt.plot(measurement_true['x'][i::N], -measurement_true['y'][i::N], '*', markersize = MARKERSIZE, label = "true position")
             # plt.plot(measurement_Kalman['x'][0::N], -measurement_Kalman['y'][0::N], '*', markersize = MARKERSIZE, label = "state estimation after Kalman")
@@ -68,8 +70,19 @@ if(__name__ == '__main__'):
     
     plt.show()
     
+    # for oneline in f_MSE:
+    #     onewords = oneline.split()
+    #     temp = []
+    #     for record in onewords:
+    #         record = float(record)
+    #         temp.append(record)
+    #     MSE.append(temp)
+    # MSE = pd.DataFrame(MSE)
+    # print(MSE)
+    # plt.figure(figsize=(8, 6), dpi = 80)
     
+    # plt.plot(MSE[1])
     
-    
+    # plt.show()
     
     

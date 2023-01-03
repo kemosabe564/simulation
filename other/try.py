@@ -31,3 +31,22 @@ print(a/3.14*360)
 # print(a)
 
 print(np.random.normal(0, 0))
+
+R_k = np.array([[1.0,   0,    0],
+                             [  0, 1.0,    0],
+                             [  0,    0, 1.0]])
+
+# A = R_k
+# for i in range(2-1):
+#     A = np.concatenate((A, R_k), axis = 1)
+# R_k = np.diag([1, 1, 0.04, 1, 1, 0.04]) 
+# print(R_k)
+# print(A)
+# print(A @ R_k @ A.T)
+
+
+A = []
+
+A.append("asdasdasd")
+A.append("df")
+print(A)

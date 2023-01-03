@@ -4,9 +4,9 @@ import math
 # init
 PI = math.pi
 MODE = "sr_EKF"
-
-
 # "normal" "sr_EKF" "mr_EKF"
+MAX_round = 1
+
 
 # screen
 screen_width = 1080
