@@ -3,7 +3,7 @@ import math
 
 # init
 PI = math.pi
-MODE = "sr_EKF"
+MODE = "normal"
 # "normal" "sr_EKF" "mr_EKF"
 MAX_round = 1
 

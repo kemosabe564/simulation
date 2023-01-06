@@ -54,7 +54,7 @@ if(__name__ == '__main__'):
     
     
     if(flag):
-        for i in range(0, 1):
+        for i in range(0, N):
             plt.figure(figsize=(8, 6), dpi = 80)
             # plt.plot(desired_trajectory['x'], -desired_trajectory['y'], '*', markersize = MARKERSIZE, label = "desired trajectory")
             plt.plot(odometry['x'][i::N], -odometry['y'][i::N], '*', markersize = MARKERSIZE, label = "odometry")

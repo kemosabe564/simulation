@@ -189,7 +189,7 @@ class Robot:
     #     # print(self.camera_buffer[0])
     #     self.start = True
     
-    def update_measurement(self, v, omega, k_filter, camera):
+    def update_measurement(self, v, omega, k_filter_camera, k_filter_odo, camera):
 
         # record the true states as measurement_true
         self.measurement_true = np.array([self.x, self.y, self.phi], float)
@@ -206,14 +206,20 @@ class Robot:
             return
         
         # 
-        optimal_state_estimate_k, covariance_estimate_k = k_filter.EKF(self.odometry, self.estimation, [v, omega], 1)
+        k_filter_odo.R_k = np.array([[1.0,   0,    0],
+                                     [  0, 1.0,    0],
+                                     [  0,    0, 1.0]]) 
+        k_filter_odo.Q_k = np.array([[0.0001,   0,    0],
+                                     [  0, 0.0001,    0],
+                                     [  0,    0, 0.0001]]) 
+        optimal_state_estimate_k, covariance_estimate_k = k_filter_odo.EKF(self.odometry, self.estimation, [v, omega], 1)
         # obs_vector_z_k = self.measurement_bias, # Most recent sensor measurement
         # state_estimate_k_1 = self.estimation, # Our most recent estimate of the state
         # u_k_1 = [v, omega], # Our most recent control input
         # P_k_1, # Our most recent state covariance matrix
         # dk = 1 # Time interval            
         self.measurement_Kalman = optimal_state_estimate_k
-        k_filter.P_k_1 = covariance_estimate_k
+        k_filter_odo.P_k_1 = covariance_estimate_k
         self.estimation = self.measurement_Kalman
         
         
@@ -251,14 +257,14 @@ class Robot:
                 # dist = math.sqrt((self.estimation[0] - self.measurement_bias[0])**2 + (self.estimation[1] - self.measurement_bias[1])**2)
                 # print(len(camera.measurement_list))
                 
-                optimal_state_estimate_k, covariance_estimate_k = k_filter.EKF(self.measurement_bias, self.estimation, [v, omega], 1)
+                optimal_state_estimate_k, covariance_estimate_k = k_filter_camera.EKF(self.measurement_bias, self.estimation, [v, omega], 1)
                 # obs_vector_z_k = self.measurement_bias, # Most recent sensor measurement
                 # state_estimate_k_1 = self.estimation, # Our most recent estimate of the state
                 # u_k_1 = [v, omega], # Our most recent control input
                 # P_k_1, # Our most recent state covariance matrix
                 # dk = 1 # Time interval            
                 self.measurement_Kalman = optimal_state_estimate_k
-                k_filter.P_k_1 = covariance_estimate_k
+                k_filter_camera.P_k_1 = covariance_estimate_k
                 self.estimation = self.measurement_Kalman
             elif(mr_KALMAN and ~sr_KALMAN):
                 
@@ -322,7 +328,7 @@ class Robot:
 
     # 1. camera update the measurements and give biased measurement
     
-    def robot_loop(self, goalX, K_filter, camera, SEED):
+    def robot_loop(self, goalX, K_filter_camera, k_filter_odo, camera):
         
         if(self.start):
             if(self.ternimate() == 1):         
@@ -331,14 +337,13 @@ class Robot:
                     # 3. robot execute the decision
                     self.update_movement(v, omega)
                     # 4. robot receive the information where it is
-                    self.update_measurement(v, omega, K_filter, camera)
+                    self.update_measurement(v, omega, K_filter_camera, k_filter_odo, camera)
                     # print(v, omega)
                     
             else:
-                # random.seed(SEED)
                 # if the robot reaches its end, make it stop and change another goal point      
                 self.update_movement(0, 0)
-                self.update_measurement(0, 0, K_filter, camera)
+                self.update_measurement(0, 0, K_filter_camera, k_filter_odo, camera)
                 
                 # update new GoalX
                 goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)

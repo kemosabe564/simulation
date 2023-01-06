@@ -41,14 +41,15 @@ if(__name__ == '__main__'):
 
         robots = Robots(robots_num, robots_x, robots_y, robots_phi, omega0, goalX, setup)
         
-        K_filter = Kalman()    
+        k_filter_camera = Kalman()  
+        k_filter_odo = Kalman()    
         
         camera = Camera(robots_num, robots_x, robots_y, robots_phi)
         
         np.random.seed(100)
         
-        SEED = np.random.randint(1000000, size=(1, robots_num))
-        SEED = SEED[0]
+        # SEED = np.random.randint(1000000, size=(1, robots_num))
+        # SEED = SEED[0]
         MSE = np.zeros((1, N), dtype = float)[0]
         
         
@@ -89,7 +90,7 @@ if(__name__ == '__main__'):
             
             robots.robots_display(screen)
             robots.update_distance_table()      
-            robots.robots_simulation_loop(goalX, K_filter, camera, SEED)
+            robots.robots_simulation_loop(goalX, k_filter_camera, k_filter_odo, camera)
                 
             
             for i in range(N):
