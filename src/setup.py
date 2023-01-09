@@ -3,9 +3,11 @@ import math
 
 # init
 PI = math.pi
-MODE = "normal"
+MODE = "mr_EKF"
 # "normal" "sr_EKF" "mr_EKF"
-MAX_round = 1
+EKF_STYLE = "cascade"
+# "cascade" "OWA"
+MAX_round = 10
 
 
 # screen

@@ -25,8 +25,8 @@ class Kalman:
                              [  0, 1.0,   0],
                              [  0,   0, 1.0]])
                         
-        self.R_k = np.array([[0.5,   0,    0],
-                             [  0, 0.5,    0],
+        self.R_k = np.array([[0.3,   0,    0],
+                             [  0, 0.3,    0],
                              [  0,    0, 1.0]]) 
          
         self.sensor_noise_w_k = np.array([0.00, 0.00, 0.00])
@@ -36,7 +36,7 @@ class Kalman:
                                [  0,   0, 0.1]])
 
  
-    def EKF(self, z_k, state_estimate_k, u_k_1, dk = 1):
+    def sr_EKF(self, z_k, state_estimate_k, u_k_1, dk = 1):
 
         ######################### Predict #############################
         # Predict the state estimate at time k based on the state 
@@ -88,7 +88,7 @@ class Kalman:
 
         return B_M
     
-    def multirate_KF(self, z_k_M, state_estimate_k_M, u_k_1, dk = 1):
+    def mr_EKF(self, z_k_M, state_estimate_k_M, u_k_1, dk = 1):
         
         B_M = self.get_B_M(5)
         
