@@ -44,10 +44,12 @@ class Robot:
         self.start = True
         
         # buffer
+        self.buffer_size = 5
+        # self.camera_buffer = [[] for i in range(3)]
+
+        self.odo_error_buffer = [0] * self.buffer_size
+        self.camera_error_buffer = [0] * self.buffer_size
         
-        self.position_buffer = []
-        self.camera_buffer = [[] for i in range(3)]
-        self.buffer_size = 41
         
         # speed 0.1-0.15
         # angle -0.0001 0.0001
@@ -289,6 +291,121 @@ class Robot:
         if(self.timer % 5 == 0):
             omega += random.uniform(-0.000, 0.000)
         return [v, omega] 
+    
+    def update_measurement_OWA(self, v, omega, k_filter_camera, k_filter_odo, camera):
+        # record the true states as measurement_true
+        self.measurement_true = np.array([self.x, self.y, self.phi], float)
+        
+        # since the eastimation doesn't know states pertubed, it will update itself based on unbiased control input ans current states
+        # self.estimation = self.states_transform(v, omega, [self.x, self.y, self.phi])
+        # it will use the last estimation to update the new one
+        
+        
+        self.estimation = self.states_transform(v, omega, self.estimation)
+
+        
+        if(no_sensor):      
+            return
+        
+        # 
+        k_filter_odo.R_k = np.array([[1.0,   0,    0],
+                                     [  0, 1.0,    0],
+                                     [  0,    0, 1.0]]) 
+        k_filter_odo.Q_k = np.array([[0.0001,   0,    0],
+                                     [  0, 0.0001,    0],
+                                     [  0,    0, 0.0001]]) 
+        optimal_state_estimate_k, covariance_estimate_k = k_filter_odo.sr_EKF(self.odometry, self.estimation, [v, omega], 1)
+        # obs_vector_z_k = self.measurement_bias, # Most recent sensor measurement
+        # state_estimate_k_1 = self.estimation, # Our most recent estimate of the state
+        # u_k_1 = [v, omega], # Our most recent control input
+        # P_k_1, # Our most recent state covariance matrix
+        # dk = 1 # Time interval            
+        self.measurement_Kalman = optimal_state_estimate_k
+        
+        k_filter_odo.P_k_1 = covariance_estimate_k
+        
+        estimation_odo = self.measurement_Kalman
+        
+        
+        
+        # the camera information is coming        
+        if(self.timer % 5 == 0):
+            
+            
+            
+            
+            # if not stop, measurements are pertubed, they could merge together, so the camera will give a "fake" data
+            # update the measurement
+            if(self.moving):
+                
+                # self.measurement_pertub(robots)
+                # self.measurement_bias = camera.measurement_list[self.idx]
+                MAX_dist = 10 * screen_width + 10 * screen_height; i = 0; idx = 0
+                for item in camera.measurement_list:
+                    dist = math.sqrt((self.estimation[0] - item[0])**2 + (self.estimation[1] - item[1])**2)
+                    if(dist < MAX_dist):
+                        MAX_dist = dist
+                        idx = i
+                    i += 1
+                # print(self.idx, ":")
+                # print(camera.measurement_list[idx])
+                if(MAX_dist > 30):
+                    return
+                
+                # position (x, y)
+                self.measurement_bias = camera.measurement_list[idx]
+                # self.measurement_bias = camera.measurement_list[self.idx]
+                
+                self.measurement_bias[2] = self.estimation[2]
+                
+                # TODO:
+                # 但是如何跟MAX_dist > 30结合来判断
+                # add dist error
+                # self.odometry - self.estimation ** 2
+                # self.measurement_bias - self.estimation ** 2
+                # 
+                self.camera_error_buffer.append(err1)
+                self.camera_error_buffer.pop(0)
+                sum_camera = sum(self.camera_error_buffer)
+                
+                self.odo_error_buffer.append(err2)
+                self.odo_error_buffer.pop(0)
+                sum_odo = sum(self.odo_error_buffer)
+                
+            if(sr_KALMAN and ~mr_KALMAN):
+                # if we decide to use the Kalman filter to correct the fake measurement 
+                # dist = math.sqrt((self.estimation[0] - self.measurement_bias[0])**2 + (self.estimation[1] - self.measurement_bias[1])**2)
+                # print(len(camera.measurement_list))
+                
+                optimal_state_estimate_k, covariance_estimate_k = k_filter_camera.sr_EKF(self.measurement_bias, self.estimation, [v, omega], 1)
+                # obs_vector_z_k = self.measurement_bias, # Most recent sensor measurement
+                # state_estimate_k_1 = self.estimation, # Our most recent estimate of the state
+                # u_k_1 = [v, omega], # Our most recent control input
+                # P_k_1, # Our most recent state covariance matrix
+                # dk = 1 # Time interval            
+                self.measurement_Kalman = optimal_state_estimate_k
+                k_filter_camera.P_k_1 = covariance_estimate_k
+                estimation_camera = self.measurement_Kalman
+                
+            elif(mr_KALMAN and ~sr_KALMAN):
+                
+                optimal_state_estimate_k, covariance_estimate_k = k_filter_camera.mr_EKF(self.measurement_bias, self.estimation, [v, omega], 1)
+                self.measurement_Kalman = optimal_state_estimate_k
+                k_filter_camera.P_k_1 = covariance_estimate_k
+                estimation_camera = self.measurement_Kalman
+                
+            else:
+                # if we decide not to use the Kalman filter to correct the fake measurement 
+                # then we use the pertubed measurement ans its true 
+                estimation_camera = self.measurement_bias
+            # if(self.idx == 1):
+            #     print([estimation_camera, estimation_odo])
+            w1 = sum_camera / (sum_camera + sum_odo)
+            w2 = sum_odo / (sum_camera + sum_odo)
+            
+            w1 = 0.2
+            w2 = 0.8
+            self.estimation = w1 * estimation_camera + w2 * estimation_odo
                                     
     def go_to_goal(self):
         # e = self.data["goalX"] - [self.measurement_Kalman[0], self.measurement_bias[1]]     # error in position
@@ -344,14 +461,19 @@ class Robot:
                     # 3. robot execute the decision
                     self.update_movement(v, omega)
                     # 4. robot receive the information where it is
-                    self.update_measurement_cascade(v, omega, K_filter_camera, k_filter_odo, camera)
+                    if EKF_STYLE == "cascade":
+                        self.update_measurement_cascade(v, omega, K_filter_camera, k_filter_odo, camera)
+                    elif EKF_STYLE == "OWA":
+                        self.update_measurement_OWA(v, omega, K_filter_camera, k_filter_odo, camera)
                     # print(v, omega)
                     
             else:
                 # if the robot reaches its end, make it stop and change another goal point      
                 self.update_movement(0, 0)
-                self.update_measurement_cascade(0, 0, K_filter_camera, k_filter_odo, camera)
-                
+                if EKF_STYLE == "cascade":
+                    self.update_measurement_cascade(0, 0, K_filter_camera, k_filter_odo, camera)
+                elif EKF_STYLE == "OWA":
+                    self.update_measurement_OWA(0, 0, K_filter_camera, k_filter_odo, camera)
                 # update new GoalX
                 goalX[0] = random.uniform(0.1*screen_width, 0.9*screen_width)
                 goalX[1] = random.uniform(0.1*screen_height, 0.9*screen_height)

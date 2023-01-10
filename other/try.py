@@ -3,6 +3,14 @@ import math
 
 import matplotlib as plot
 lst1 = [2, 3, 4, 1, 1, 5]
+lst1 = [0] * 5
+lst1.append(1)
+
+print(lst1)
+print(sum(lst1))
+lst1.pop(0)
+
+print(lst1)
 
 lst2 = list(set(lst1))
 
@@ -45,8 +53,3 @@ R_k = np.array([[1.0,   0,    0],
 # print(A @ R_k @ A.T)
 
 
-A = []
-
-A.append("asdasdasd")
-A.append("df")
-print(A)
