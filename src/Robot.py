@@ -364,13 +364,17 @@ class Robot:
                 # self.odometry - self.estimation ** 2
                 # self.measurement_bias - self.estimation ** 2
                 # 
-                self.camera_error_buffer.append(err1)
+                err_camera = ((self.estimation[0] - self.measurement_bias[0])**2 + (self.estimation[1] - self.measurement_bias[1])**2)
+                err_odo = ((self.estimation[0] - self.odometry[0])**2 + (self.estimation[1] - self.odometry[1])**2)
+                self.camera_error_buffer.append(err_camera)
                 self.camera_error_buffer.pop(0)
-                sum_camera = sum(self.camera_error_buffer)
+
                 
-                self.odo_error_buffer.append(err2)
+                self.odo_error_buffer.append(err_odo)
                 self.odo_error_buffer.pop(0)
-                sum_odo = sum(self.odo_error_buffer)
+                
+                
+
                 
             if(sr_KALMAN and ~mr_KALMAN):
                 # if we decide to use the Kalman filter to correct the fake measurement 
@@ -398,13 +402,24 @@ class Robot:
                 # if we decide not to use the Kalman filter to correct the fake measurement 
                 # then we use the pertubed measurement ans its true 
                 estimation_camera = self.measurement_bias
-            # if(self.idx == 1):
-            #     print([estimation_camera, estimation_odo])
+                                    
+            sum_camera = sum(self.camera_error_buffer)
+            sum_odo = sum(self.odo_error_buffer)
+            
+            
+                
             w1 = sum_camera / (sum_camera + sum_odo)
             w2 = sum_odo / (sum_camera + sum_odo)
             
-            w1 = 0.2
-            w2 = 0.8
+            # w1 = 0.2
+            # w2 = 0.8
+            if(self.idx == 1):
+            #     print("odo:", self.odo_error_buffer)
+            #     print(sum_odo)
+            #     print("camera: ", self.camera_error_buffer)
+            #     print(sum_camera)
+            #     print([estimation_camera, estimation_odo])
+                print([w1, w2])
             self.estimation = w1 * estimation_camera + w2 * estimation_odo
                                     
     def go_to_goal(self):
