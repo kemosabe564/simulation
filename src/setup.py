@@ -7,7 +7,7 @@ MODE = "mr_EKF"
 # "normal" "sr_EKF" "mr_EKF"
 EKF_STYLE = "OWA"
 # "cascade" "OWA"
-MAX_round = 1
+MAX_round = 10
 
 
 # screen

@@ -47,8 +47,8 @@ class Robot:
         self.buffer_size = 5
         # self.camera_buffer = [[] for i in range(3)]
 
-        self.odo_error_buffer = [0] * self.buffer_size
-        self.camera_error_buffer = [0] * self.buffer_size
+        self.odo_error_buffer = [0.1] * self.buffer_size
+        self.camera_error_buffer = [0.1] * self.buffer_size
         
         
         # speed 0.1-0.15
@@ -411,16 +411,20 @@ class Robot:
             w1 = sum_camera / (sum_camera + sum_odo)
             w2 = sum_odo / (sum_camera + sum_odo)
             
+            if(sum_camera > 30 * self.buffer_size):
+                w1 = 0.9
+                w2 = 0.1
+            
             # w1 = 0.2
             # w2 = 0.8
             if(self.idx == 1):
-            #     print("odo:", self.odo_error_buffer)
+                print("odo:", self.odo_error_buffer)
             #     print(sum_odo)
-            #     print("camera: ", self.camera_error_buffer)
+                print("camera: ", self.camera_error_buffer)
             #     print(sum_camera)
             #     print([estimation_camera, estimation_odo])
                 print([w1, w2])
-            self.estimation = w1 * estimation_camera + w2 * estimation_odo
+            self.estimation = w2 * estimation_camera + w1 * estimation_odo
                                     
     def go_to_goal(self):
         # e = self.data["goalX"] - [self.measurement_Kalman[0], self.measurement_bias[1]]     # error in position

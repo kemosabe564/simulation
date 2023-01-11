@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import math
 
+from src.setup import *
 
 N = 10
 MARKERSIZE = 2
@@ -68,21 +69,25 @@ if(__name__ == '__main__'):
             
             plt.savefig('pics/robot' + str(i) + '.png')
     
-    plt.show()
-    
-    for oneline in f_MSE:
-        onewords = oneline.split()
-        temp = []
-        for record in onewords:
-            record = float(record)
-            temp.append(record)
-        MSE.append(temp)
-    MSE = pd.DataFrame(MSE)
-    print(MSE)
-    # plt.figure(figsize=(8, 6), dpi = 80)
-    
-    # plt.plot(MSE[1])
-    
-    # plt.show()
-    print(sum(MSE.iloc[0])/N)
+        plt.show()
+    else:
+        for oneline in f_MSE:
+            onewords = oneline.split()
+            temp = []
+            for record in onewords:
+                record = float(record)
+                temp.append(record)
+            MSE.append(temp)
+        MSE = pd.DataFrame(MSE)
+        print(MSE)
+        # plt.figure(figsize=(8, 6), dpi = 80)
+        
+        # plt.plot(MSE[1])
+        
+        # plt.show()
+        sum1 = []
+        for i in range(MAX_round):
+            sum1.append(sum(MSE.iloc[i])/N)
+        # print(sum(MSE.iloc[0])/N)
+        print(sum1)
     
