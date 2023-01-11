@@ -40,7 +40,7 @@ if(__name__ == '__main__'):
     
     
     
-    flag = 1
+    flag = 0
     indicator = np.zeros((1, N), dtype = float)
     indicator = indicator[0]
 
@@ -61,7 +61,7 @@ if(__name__ == '__main__'):
             plt.plot(odometry['x'][i::N], -odometry['y'][i::N], '*', markersize = MARKERSIZE, label = "odometry")
             plt.plot(estimation['x'][i::N], -estimation['y'][i::N], '*', markersize = MARKERSIZE, label = "estimated position")
             plt.plot(measurement_true['x'][i::N], -measurement_true['y'][i::N], '*', markersize = MARKERSIZE, label = "true position")
-            plt.plot(measurement_bias['x'][i::N], -measurement_bias['y'][i::N], '*', markersize = MARKERSIZE, label = "camera")
+            # plt.plot(measurement_bias['x'][i::N], -measurement_bias['y'][i::N], '*', markersize = MARKERSIZE, label = "camera")
             
             plt.title("robot" + str(i) + " trajectories")
             plt.xlabel('x'); plt.ylabel('y'); 
@@ -76,6 +76,7 @@ if(__name__ == '__main__'):
             temp = []
             for record in onewords:
                 record = float(record)
+                record = round(record, 3)
                 temp.append(record)
             MSE.append(temp)
         MSE = pd.DataFrame(MSE)
@@ -87,7 +88,10 @@ if(__name__ == '__main__'):
         # plt.show()
         sum1 = []
         for i in range(MAX_round):
-            sum1.append(sum(MSE.iloc[i])/N)
+            num = sum(MSE.iloc[i])/N
+            num = round(num, 3)
+            sum1.append(num)
+        
         # print(sum(MSE.iloc[0])/N)
-        print(sum1)
-    
+        print(pd.DataFrame(sum1).T)
+        print(sum(sum1)/N)

@@ -417,13 +417,13 @@ class Robot:
             
             # w1 = 0.2
             # w2 = 0.8
-            if(self.idx == 1):
-                print("odo:", self.odo_error_buffer)
+            # if(self.idx == 1):
+                # print("odo:", self.odo_error_buffer)
             #     print(sum_odo)
-                print("camera: ", self.camera_error_buffer)
+                # print("camera: ", self.camera_error_buffer)
             #     print(sum_camera)
             #     print([estimation_camera, estimation_odo])
-                print([w1, w2])
+                # print([w1, w2])
             self.estimation = w2 * estimation_camera + w1 * estimation_odo
                                     
     def go_to_goal(self):
