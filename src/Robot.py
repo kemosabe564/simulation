@@ -216,9 +216,9 @@ class Robot:
         k_filter_odo.R_k = np.array([[1.0,   0,    0],
                                      [  0, 1.0,    0],
                                      [  0,    0, 1.0]]) 
-        k_filter_odo.Q_k = np.array([[0.0001,   0,    0],
-                                     [  0, 0.0001,    0],
-                                     [  0,    0, 0.0001]]) 
+        k_filter_odo.Q_k = np.array([[0.01,   0,    0],
+                                     [  0, 0.01,    0],
+                                     [  0,    0, 0.005]]) 
         optimal_state_estimate_k, covariance_estimate_k = k_filter_odo.sr_EKF(self.odometry, self.estimation, [v, omega], 1)
         # obs_vector_z_k = self.measurement_bias, # Most recent sensor measurement
         # state_estimate_k_1 = self.estimation, # Our most recent estimate of the state
