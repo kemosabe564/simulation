@@ -190,7 +190,6 @@ class Robot:
     #     print(min_idx)
         
             
-    #     # 做些判断，找到最后应该是哪一条camera的信息
     #     self.estimation[0] = self.camera_buffer[min_idx][self.buffer_size-1][0]
     #     self.estimation[1] = self.camera_buffer[min_idx][self.buffer_size-1][1]
     #     # print(self.camera_buffer[0])
