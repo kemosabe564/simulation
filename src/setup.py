@@ -3,9 +3,9 @@ import math
 
 # init
 PI = math.pi
-MODE = "mr_EKF"
+MODE = "sr_EKF"
 # "normal" "sr_EKF" "mr_EKF"
-EKF_STYLE = "OWA"
+EKF_STYLE = "cascade"
 # "cascade" "OWA"
 MAX_round = 10
 
